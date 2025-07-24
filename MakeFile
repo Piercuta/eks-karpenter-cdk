@@ -1,0 +1,45 @@
+# -------- Default Configuration --------
+ENV ?= dev
+STACK ?= --all
+PROFILE ?= piercuta-dev  # or your default profile
+
+# -------- CDK Commands --------
+
+install:
+	pip install -r requirements.txt
+
+synth:
+	cdk synth --context env=$(ENV) --profile $(PROFILE)
+
+deploy:
+	cdk deploy $(STACK) --context env=$(ENV) --profile $(PROFILE)
+
+diff:
+	cdk diff $(STACK) --context env=$(ENV) --profile $(PROFILE)
+
+destroy:
+	cdk destroy $(STACK) --context env=$(ENV) --profile $(PROFILE)
+
+# -------- Development Tools --------
+
+format:
+	black .
+
+lint:
+	ruff .
+
+test:
+	pytest
+
+# -------- Utilities --------
+
+clean:
+	rm -rf .pytest_cache .venv __pycache__ .cdk.staging cdk.out *.egg-info
+
+help:
+	@echo "Usage:"
+	@echo "  make install                     Installer dependencies"
+	@echo "  make synth ENV=dev PROFILE=xxx  Synthétize the stack"
+	@echo "  make deploy STACK=xxx ENV=prod PROFILE=xxx"
+	@echo "  make diff / destroy             Idem"
+	@echo "  make lint / format / test"

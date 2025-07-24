@@ -1,0 +1,57 @@
+version: 0.2
+phases:
+  install:
+    runtime-versions:
+      python: 3.10
+    commands:
+      - echo Installing kubectl...
+      - curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
+      - chmod +x ./kubectl
+      - mv ./kubectl /usr/local/bin/
+  pre_build:
+    commands:
+      - echo Configuring kubectl for EKS cluster...
+      - aws eks update-kubeconfig --name $CLUSTER_NAME --region $EKS_REGION
+  build:
+    commands:
+      - echo Disabling ArgoCD sync...
+      - kubectl delete application --all -n argocd || true
+      
+      - echo Deleting Ingress and LoadBalancer services...
+      - |
+        for ns in $(kubectl get namespaces -o jsonpath='{.items[*].metadata.name}'); do
+          echo "Cleaning namespace:$ns";
+          kubectl delete ingress --all -n $ns || true;
+          kubectl delete service --field-selector=spec.type=LoadBalancer -n $ns || true;
+        done
+
+      - echo Deleting Karpenter resources...
+      - kubectl delete nodepool --all || true
+      - kubectl delete ec2nodeclass --all || true
+      - kubectl get nodes -l workload/node-type=karpenter -o name | xargs -r -n1 kubectl delete || true
+      
+      - echo "🔍 Searching for instance profiles linked to role:$KARPENTER_NODE_ROLE"
+
+      # Obtenir les instance profiles
+      - |
+        PROFILE_ARNS=$(aws iam list-instance-profiles \
+          --query "InstanceProfiles[?Roles[?RoleName=='$KARPENTER_NODE_ROLE']].Arn" \
+          --output text)
+
+        for PROFILE_ARN in $PROFILE_ARNS; do
+          PROFILE_NAME=$(basename $PROFILE_ARN)
+          echo "🧹 Removing association $KARPENTER_NODE_ROLE from $PROFILE_NAME"
+          aws iam remove-role-from-instance-profile \
+            --instance-profile-name "$PROFILE_NAME" \
+            --role-name "$KARPENTER_NODE_ROLE" || true
+
+          echo "🗑️ Deleting instance profile $PROFILE_NAME"
+          aws iam delete-instance-profile \
+            --instance-profile-name "$PROFILE_NAME" || true
+        done
+
+      - echo Cleanup complete.
+
+artifacts:
+  files:
+    - '**/*' 

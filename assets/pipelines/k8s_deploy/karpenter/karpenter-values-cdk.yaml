@@ -1,0 +1,18 @@
+settings:
+  clusterName: ${CLUSTER_NAME}
+  interruptionQueue: ${CLUSTER_NAME}
+serviceAccount:
+  create: true
+  name: karpenter
+replicas: 1
+controller:
+  env:
+  - name: FEATURE_GATES
+    value: "SpotToSpotConsolidation=true"
+  resources:
+    requests:
+      cpu: 1
+      memory: 1Gi
+    limits:
+      cpu: 1
+      memory: 1Gi

@@ -1,0 +1,5 @@
+clusterName: ${CLUSTER_NAME}
+vpcId: ${VPC_ID}
+serviceAccount:
+  create: true
+  name: "aws-load-balancer-controller"
