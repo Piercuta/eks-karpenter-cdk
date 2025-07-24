@@ -1,0 +1,156 @@
+aws sso login --profile piercuta-dev
+
+aws ecr --profile <my-profile> get-login-password --region eu-west-1 | docker login --username AWS --password-stdin 532673134317.dkr.ecr.eu-west-1.amazonaws.com
+
+docker build -t 532673134317.dkr.ecr.eu-west-1.amazonaws.com/services/ecs/fastapi_app:prod .  
+
+docker push 532673134317.dkr.ecr.eu-west-1.amazonaws.com/services/ecs/fastapi_app:prod   
+
+aws sts get-caller-identity
+
+aws sts get-caller-identity --profile piercuta-dev
+
+#EKS
+
+aws eks update-kubeconfig --name karpenter-eks-cluster --region eu-west-1 --profile piercuta-dev
+kubectl get namespaces
+kubectl get nodes
+kubectl get pods -n kube-system
+kubectl get pods -A
+kubectl get pods -n karpenter
+kubectl get serviceaccount -n karpenter
+kubectl describe serviceaccount karpenter -n karpenter
+kubectl logs -n karpenter -l app.kubernetes.io/name=karpenter -c controller
+kubectl get configmap aws-auth -n kube-system -o yaml
+
+cat <<EOF | kubectl apply -f -
+apiVersion: karpenter.k8s.aws/v1
+kind: EC2NodeClass
+metadata:
+  name: default
+spec:
+  role: KarpenterNodeRole-karpenter-eks-cluster
+  subnetSelectorTerms:
+  - tags:
+      karpenter.sh/discovery: karpenter-eks-cluster
+  securityGroupSelectorTerms:
+  - tags:
+      karpenter.sh/discovery: karpenter-eks-cluster
+  amiFamily: AL2023
+  amiSelectorTerms:
+  - alias: al2023@latest  
+EOF
+
+cat <<EOF | kubectl apply -f -
+apiVersion: karpenter.sh/v1
+kind: NodePool
+metadata:
+  name: default
+spec:
+  template:
+    spec:
+      nodeClassRef:
+        group: karpenter.k8s.aws
+        kind: EC2NodeClass
+        name: default
+      requirements:
+      - key: karpenter.k8s.aws/instance-category
+        operator: In
+        values: [c, m, r]
+      - key: karpenter.k8s.aws/instance-generation
+        operator: Gt
+        values: ["2"]
+      - key: karpenter.sh/capacity-type
+        operator: In
+        values: ["on-demand"]
+EOF
+
+kubectl get ec2nodeclass default
+kubectl get nodepool default  
+
+cat <<EOF | kubectl apply -f -                                   
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: inflate
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: inflate
+  template:
+    metadata:
+      labels:
+        app: inflate
+    spec:
+      containers:
+      - name: inflate
+        image: public.ecr.aws/eks-distro/kubernetes/pause:3.2
+        resources:
+          requests:
+            memory: 1Gi
+            cpu: 1
+EOF
+
+# debug log karpenter
+kubectl logs -n karpenter -l app.kubernetes.io/name=karpenter -c controller -f | jq .
+# restart if needed.
+kubectl delete pods -n karpenter --all 
+
+kubectl get nodeclaims
+kubectl get nodes
+kubectl get pods -l app=inflate
+
+# Voir les ressources du nœud existant
+kubectl describe node $(kubectl get nodes -o jsonpath='{.items[0].metadata.name}') | grep -A 10 "Allocated resources"
+
+# Voir les pods sur le nœud existant
+kubectl get pods -o wide | grep $(kubectl get nodes -o jsonpath='{.items[0].metadata.name}')
+
+# Voir les taints sur le nœud existant
+kubectl get nodes -o jsonpath='{.items[0].spec.taints}'
+
+# Voir les tolerations du déploiement
+kubectl get deployment inflate -o yaml | grep -A 10 -B 10 tolerations
+
+# Voir les labels du nœud existant
+kubectl get nodes --show-labels
+
+# Voir les node selectors du déploiement
+kubectl get deployment inflate -o yaml | grep -A 10 -B 10 nodeSelector
+
+# sur l'sinatcen généré par karpenter...
+sudo systemctl restart kubelet
+sudo journalctl -u kubelet -f
+
+# decrease the number of pods to 1 and let karpenter manage the node
+kubectl scale deployment inflate --replicas=1
+
+# follow logs of karpenter controller
+kubectl logs -n karpenter -l app.kubernetes.io/name=karpenter -c controller
+
+export FASTAPI_IMAGE=532673134317.dkr.ecr.eu-west-1.amazonaws.com/services/eks/fastapi_hello_world:latest && \
+export CERTIFICATE_ARN=arn:aws:acm:eu-west-1:532673134317:certificate/905d0d16-87e8-4e89-a88c-b6053f472e81 && \
+export DOMAIN=fastapi-karpenter.piercuta.com && \
+kubectl create namespace fastapi --dry-run=client -o yaml | kubectl apply -f - && \
+envsubst < k8s-manifests/fast-api.yaml | kubectl apply -f -
+
+kubectl delete ingress --all --all-namespaces
+kubectl delete svc --all --all-namespaces
+kubectl delete pvc --all --all-namespaces
+
+kubctl logs resource_name -n namespace
+
+aws secretsmanager get-secret-value --secret-id "arn:aws:secretsmanager:eu-west-1:532673134317:secret:rds!cluster-44d794c6-0250-4d1b-9a82-34c4d707e6ba-NfTR6g" --region eu-west-1
+
+kubectl get pods -n fastapi -o wide
+kubectl get pods -A -o wide
+
+sudo cat /var/log/cloud-init.log
+sudo cat /var/log/cloud-init-output.log
+
+sudo journalctl -u kubelet
+sudo journalctl -u containerd
+
+kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d && echo
+kubectl port-forward -n argocd svc/argocd-server 8080:443

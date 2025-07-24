@@ -1,0 +1,6 @@
+serviceAccount:
+  create: true
+  name: "karpenter"
+settings:
+  clusterName: ${CLUSTER_NAME}
+  interruptionQueue: ${CLUSTER_NAME}

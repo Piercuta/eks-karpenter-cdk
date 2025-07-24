@@ -1,0 +1,56 @@
+aws:
+  account: "532673134317"
+  region: "eu-west-1"
+
+vpc:
+  cidr: "10.0.0.0/16"
+  max_azs: 3
+  reserved_azs: 3
+  nat_gateways: 3
+
+database:
+  snapshot_identifier: "piercuta-prod-aurora-cluster-snap"
+  backup_retention: 1
+  serverless_v2_min_capacity: 0.5
+  serverless_v2_max_capacity: 6.0
+  instance_reader: true
+  master_username: postgres
+
+backend:
+  task_cpu: "2Gi"
+  task_memory: "4Gi"
+  desired_count: 2
+  certificate_arn: "arn:aws:acm:eu-west-1:532673134317:certificate/905d0d16-87e8-4e89-a88c-b6053f472e81"
+  auto_scaling_min_capacity: 1
+  auto_scaling_max_capacity: 50
+  ecr_repository_name: "services/ecs/fastapi_app"
+  ecr_image_tag: "prod"
+  container_env_vars:
+    POSTGRES_DB: app
+    POSTGRES_PORT: "5432"
+    SECRET_KEY: Osa3ZuhC7d6ssbF4XmKtYlemuTdbefkPvuZgOCRTrLg
+    FIRST_SUPERUSER: admin@example.com
+    FIRST_SUPERUSER_PASSWORD: Coucou123!
+    
+frontend:
+  domain_name: frontend.piercuta.com
+  certificate_arn: "arn:aws:acm:us-east-1:532673134317:certificate/0755fa69-6f18-451a-8987-d98c395089b9"
+
+cicd_frontend:
+  github:
+    connection_arn: "arn:aws:codeconnections:eu-west-1:532673134317:connection/2a30a395-8d38-43ab-827b-f39a83c9986a"
+    owner: "Piercuta"
+    repo: "full-stack-fastapi-front"
+    branch: "prod"
+
+cicd_backend:
+  github:
+    connection_arn: "arn:aws:codeconnections:eu-west-1:532673134317:connection/2a30a395-8d38-43ab-827b-f39a83c9986a"
+    owner: "Piercuta"
+    repo: "full-stack-fastapi-backend"
+    branch: "prod"
+
+dns:
+  hosted_zone_id: Z0068506UV3AK4JBKP59
+  frontend_domain_name: frontend.piercuta.com
+  fastapi_domain_name: api.piercuta.com

@@ -1,0 +1,27 @@
+# Vim / Emacs
+*.swp
+*~
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.venv/
+*$py.class
+
+# CDK
+cdk.out/
+.cdk.staging/
+
+# Environnement
+.env
+
+# IDEs
+.vscode/
+.idea/
+
+# Optionnel
+*.log
+*.zip
+.aws-sam/

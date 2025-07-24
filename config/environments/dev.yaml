@@ -1,0 +1,62 @@
+aws:
+  account: "532673134317"
+  region: "eu-west-1"
+
+vpc:
+  cidr: "10.0.0.0/16"
+  max_azs: 3
+  reserved_azs: 3
+  nat_gateways: 1
+  automatic_subnet_creation: false
+
+database:
+  snapshot_identifier: "piercuta-dev-aurora-cluster-snap"
+  snapshot_on_deletion: false
+  backup_retention: 1
+  serverless_v2_min_capacity: 0.5
+  serverless_v2_max_capacity: 2.0
+  instance_reader: false
+  master_username: postgres
+  
+eks:
+  cluster_version: "1.32"
+  node_group:
+    instance_type: "m5.large"
+    min_size: 1
+    max_size: 2
+    desired_size: 1
+
+frontend:
+  domain_name: dev-react.piercuta.com
+  certificate_arn: "arn:aws:acm:us-east-1:532673134317:certificate/0755fa69-6f18-451a-8987-d98c395089b9"
+
+cicd_frontend:
+  github:
+    connection_arn: "arn:aws:codeconnections:eu-west-1:532673134317:connection/2a30a395-8d38-43ab-827b-f39a83c9986a"
+    owner: "Piercuta"
+    repo: "full-stack-fastapi-front"
+    branch: "dev"
+
+cicd_k8s_fastapi:
+  cpu_capacity: "1000m"
+  mem_capacity: "512Mi"
+  # replicas: 3
+  min_replicas: 1
+  max_replicas: 5
+  certificate_arn: "arn:aws:acm:eu-west-1:532673134317:certificate/905d0d16-87e8-4e89-a88c-b6053f472e81"
+  container_env_vars:
+    POSTGRES_DB: app
+    POSTGRES_PORT: "5432"
+  ecr_repository_name: "services/ecs/fastapi_app"
+  ecr_image_tag: "dev"
+  github:
+    connection_arn: "arn:aws:codeconnections:eu-west-1:532673134317:connection/2a30a395-8d38-43ab-827b-f39a83c9986a"
+    owner: "Piercuta"
+    repo: "full-stack-fastapi-backend"
+    branch: "dev"
+
+dns:
+  hosted_zone_id: Z0068506UV3AK4JBKP59
+  frontend_domain_name: dev-react.piercuta.com
+  fastapi_domain_name: dev-fast-api.piercuta.com
+  argocd_domain_name: dev-argocd.piercuta.com

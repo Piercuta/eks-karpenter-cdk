@@ -1,0 +1,20 @@
+{
+    "RequestType": "Create",
+    "ServiceToken": "arn:aws:lambda:eu-west-1:532673134317:function:piercuta-dev-cleanup-lambda",
+    "ResponseURL": "https://cloudformation-custom-resource-response-euwest1.s3-eu-west-1.amazonaws.com/arn%3Aaws%3Acloudformation%3Aeu-west-1%3A532673134317%3Astack/piercuta-dev-cicd-k8s-deploy-stack/87a7aef0-6647-11f0-b673-0a75809f994f%7CIngressCleanupResource%7C0a5540ea-16ba-4041-97cd-70ccda1c8448?X-Amz-Security-Token=IQoJb3JpZ2luX2VjEMD%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCWV1LXdlc3QtMSJHMEUCIQDuOf0nwG6GQLdstHpm6nPLEoF%2B0w0ZioSTAM0c83C2lAIgPqRdfe8ow83UTUcERxCtgEC46Y2fJIXtAJwkqvumB8kq8QII2f%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FARAAGgwzNDI2Njc3NzcxMTMiDKVIczX6hqaFknnV%2BSrFAv%2FKwf9AfrUnUKdo27Y9vcjkH2vz673A4YuYhEhnnYMlhK3huf943G%2FKLOmCof3Xwvh44DNQNnUYiobTrZzYa7GpRG3GMQ0VjQQPw6%2FeXs0kpfTmHC1ugkXlD2idioemH0lLt%2ByWHRKXmzKvMPWPZLE5C74u94r9yevkcK1G8GTceGoD1s0%2BHii8zh3QtvPzlix2VWCqx8SMoV6wKjRxjgrhssb8j6nOdHu29lqcJ5C243TUq4lByX%2FlNMfnW6ixUwPHaRYRcYsqM%2BooEXW1Fad7bJc%2FSXq7vmnr0MRlgyqf3Ujq39lk5nmbud5UNSevD7Wd%2BRl5TPvvK27ftPOTEBsL1fTfAPha8HWAUvFqkMXF8LpTy%2B474N%2BlWyVh2N%2FBridICaxmcYzBJQ1%2Bg8I7tnUtqf21MJ6%2BermCG4dfgAx5tIyHGE8wpbr5wwY6vwEq3PbYfM7k4UTD4X%2FfwagsAFvph0gIadsBXAVaOzJigF2ma0%2BV2cfeDWksN4kBnLzqEd8s8RmX6NAqRtDpG1CM0nXORBUs3sLk60gcK6%2F%2B3K9XnAtXDWr1CAFiehGhgnA%2BDQLOJqu4yw%2BKvQFOK1A4fyoTou7%2FxLN3Z3s%2FMgZjDh7ImmPRcRUEw1YbzFDCCLJBUZ37Lt3hwc3YH3%2Bxj2%2BYV2pkvWt5WaKrmWxM5feqGQn0bckQnXwyTAXB7rQTdw%3D%3D&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20250721T153045Z&X-Amz-SignedHeaders=host&X-Amz-Expires=7200&X-Amz-Credential=ASIAU7SEXKRMQ6QF2XWL%2F20250721%2Feu-west-1%2Fs3%2Faws4_request&X-Amz-Signature=f1353a9b7dfc9d826bab3dc2e6ce2257aa62a1e8aeaa5d8742e3f74c7b233a73",
+    "StackId": "arn:aws:cloudformation:eu-west-1:532673134317:stack/piercuta-dev-cicd-k8s-deploy-stack/87a7aef0-6647-11f0-b673-0a75809f994f",
+    "RequestId": "0a5540ea-16ba-4041-97cd-70ccda1c8448",
+    "LogicalResourceId": "IngressCleanupResource",
+    "ResourceType": "AWS::CloudFormation::CustomResource",
+    "ResourceProperties": {
+        "ServiceToken": "arn:aws:lambda:eu-west-1:532673134317:function:piercuta-dev-cleanup-lambda",
+        "AccountId": "532673134317",
+        "VpcId": "vpc-0d092b23bf2eee715",
+        "ProjectName": "piercuta",
+        "KarpenterNodeRole": "piercuta-dev-karpenter-node-role",
+        "ClusterName": "piercuta-dev-eks-cluster",
+        "Region": "eu-west-1",
+        "Environment": "dev",
+        "EksNodeRole": "piercuta-dev-eks-node-role"
+    }
+}

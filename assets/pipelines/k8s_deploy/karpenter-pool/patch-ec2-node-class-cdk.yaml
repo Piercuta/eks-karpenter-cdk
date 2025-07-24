@@ -1,0 +1,17 @@
+apiVersion: karpenter.k8s.aws/v1
+kind: EC2NodeClass
+metadata:
+  name: karpenter-node-class
+  labels:
+      app: karpenter
+spec:
+  tags:
+    EnvName: ${ENV_NAME}
+    ProjectName: ${PROJECT_NAME}
+  role: ${KARPENTER_NODE_ROLE}
+  subnetSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: ${CLUSTER_NAME}
+  securityGroupSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: ${CLUSTER_NAME}

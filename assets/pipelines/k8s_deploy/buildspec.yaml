@@ -1,0 +1,49 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.10
+      nodejs: 18
+    commands:
+      - echo "Installing tools..."
+      - curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
+      - chmod +x ./kubectl && mv ./kubectl /usr/local/bin/
+      - curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+      - pip install pyyaml
+  pre_build:
+    commands:
+      - echo "Injecting variables into values.yaml..."
+      - python3 replace_values.py      
+      - echo "Retrieving GitHub Token from Secrets Manager..."
+      - export GITHUB_TOKEN=$(aws secretsmanager get-secret-value --secret-id github-token --query SecretString --output text | jq -r .token)
+      - echo "GITHUB_TOKEN $GITHUB_TOKEN"
+      - echo "Cloning GitOps repo..."
+      - git config --global user.email "ci-bot@example.com"
+      - git config --global user.name "ci-bot"
+      - git clone https://x-access-token:$GITHUB_TOKEN@github.com/Piercuta/eks-karpenter-git-ops.git
+      
+      - cp -r ./aws-load-balancer-controller/* eks-karpenter-git-ops/infrastructure/aws-load-balancer-controller/${ENV_NAME}/
+      - cp -r ./karpenter/* eks-karpenter-git-ops/infrastructure/karpenter/${ENV_NAME}/
+      - cp -r ./karpenter-pool/* eks-karpenter-git-ops/infrastructure/karpenter-pool/${ENV_NAME}/patches/
+      - cp -r ./config-maps/aws-auth.yaml eks-karpenter-git-ops/clusters/config/aws-auth.yaml
+      - cp -r ./ingress/* eks-karpenter-git-ops/infrastructure/ingress/${ENV_NAME}/patches/
+
+      - cd eks-karpenter-git-ops
+      - git add .
+      - git commit -m "CDK CICD K8s Deploy - ${PROJECT_NAME} - ${ENV_NAME} - update all values" || echo "Nothing to commit"
+      - git push
+  build:
+    commands:
+      - echo "Configuring kubectl for EKS cluster..."
+      - aws eks update-kubeconfig --name $CLUSTER_NAME --region $AWS_REGION
+      - echo "Deploying ArgoCD and bootstrapping apps..."
+      - kubectl create namespace argocd || true
+      - kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+      # use env_name to select the correct app-dev.yaml
+      #- kubectl apply -f argocd/bootstrap.yaml
+      - kubectl apply -f apps-${ENV_NAME}.yaml
+
+artifacts:
+  files:
+    - "**/*"

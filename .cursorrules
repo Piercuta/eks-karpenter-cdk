@@ -1,0 +1,92 @@
+# Cursor Rules for AWS CDK Project
+
+# Documentation and Comments
+- All comments must be written in English
+- Use docstrings for all classes and methods
+- Include type hints for all function parameters and return values
+- Document complex logic with inline comments
+
+# Code Style
+- Use 4 spaces for indentation
+- Maximum line length: 120 characters
+- Use meaningful variable and function names
+- Follow PEP 8 naming conventions:
+  - Classes: PascalCase
+  - Functions and variables: snake_case
+  - Constants: UPPER_CASE
+
+# AWS CDK Specific
+- Use meaningful resource names with proper prefixes
+- Include removal policies for all resources
+- Add proper tags to all resources
+- Use environment variables for sensitive data
+- Follow AWS best practices for security
+
+# Error Handling
+- Include proper error handling in Lambda functions
+- Use try-except blocks for AWS API calls
+- Log errors with appropriate context
+
+# Testing
+- Write unit tests for all Lambda functions
+- Include integration tests for CDK constructs
+- Test error scenarios and edge cases
+
+# Security
+- Use least privilege principle for IAM roles
+- Encrypt sensitive data at rest
+- Use KMS for key management
+- Follow AWS security best practices
+
+# Infrastructure
+- Use proper VPC configurations
+- Implement proper security groups
+- Use private subnets for databases
+- Implement proper backup strategies
+
+# Monitoring
+- Add CloudWatch alarms for critical metrics
+- Use proper log groups with retention policies
+- Implement proper monitoring for all services
+
+# Cost Optimization
+- Use appropriate instance types
+- Implement auto-scaling where needed
+- Use serverless where possible
+- Monitor and optimize costs
+
+# Deployment
+- Use proper deployment strategies
+- Implement proper rollback mechanisms
+- Use proper versioning for resources
+- Follow blue/green deployment practices
+
+# Code Organization
+- Keep related code together
+- Use proper module structure
+- Follow single responsibility principle
+- Use proper abstraction levels
+
+# Documentation
+- Keep README up to date
+- Document all configuration options
+- Include setup instructions
+- Document deployment process
+
+# Version Control
+- Use meaningful commit messages
+- Follow git flow branching strategy
+- Keep branches up to date
+- Review code before merging
+
+# Performance
+- Optimize Lambda cold starts
+- Use proper caching strategies
+- Optimize database queries
+- Use proper connection pooling
+
+# Maintenance
+- Keep dependencies up to date
+- Remove unused code
+- Regular security updates
+- Regular performance reviews 
