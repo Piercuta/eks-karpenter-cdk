@@ -76,6 +76,7 @@ class EksCluster(Construct):
         self.kube_proxy_addon = self._create_kube_proxy_addon()
         self.coredns_addon = self._create_coredns_addon()
         self.external_dns_addon = self._create_external_dns_addon()
+        self.cloudwatch_observability_addon = self._create_cloudwatch_observability_addon()
 
         # IAM role for karpenter ec2 new nodes
         self.karpenter_node_role = self._create_karpenter_node_role()
@@ -643,9 +644,9 @@ class EksCluster(Construct):
 
         addon = eks.CfnAddon(
             self, "CloudWatchObservabilityAddon",
-            addon_name="cloudwatch-observability",
+            addon_name="amazon-cloudwatch-observability",
             cluster_name=self.eks_cluster.name,
-            addon_version="v4.2.1-eksbuild.1",
+            addon_version="v4.4.0-eksbuild.1",
             resolve_conflicts="OVERWRITE",
             pod_identity_associations=[
                 eks.CfnAddon.PodIdentityAssociationProperty(
