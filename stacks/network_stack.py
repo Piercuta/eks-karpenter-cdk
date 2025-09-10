@@ -108,12 +108,13 @@ class NetworkStack(Stack):
             iam.PolicyStatement(
                 effect=iam.Effect.ALLOW,
                 principals=[iam.AnyPrincipal()],
-                actions=["s3:GetObject", "s3:PutObject", "s3:DeleteObject"],
-                resources=[f"arn:aws:s3:::{self.config.prefix('media-bucket')}/*"]
+                actions=["s3:*"],
+                resources=["*"]
             )
         )
 
         return s3_endpoint
+
     # def _get_manual_subnets(self, all_subnets, subnet_group_name):
     #     return [
     #         ec2.Subnet.from_subnet_attributes(

@@ -81,6 +81,7 @@ class AuroraCluster(Construct):
         # Create Lambda function
         return lambda_.Function(
             self, "ManageMasterUserPasswordLambda",
+            function_name=self.config.prefix("manage-master-user-password"),
             runtime=lambda_.Runtime.PYTHON_3_11,
             handler="manage_master_user_password.handler",
             code=lambda_.Code.from_asset(
