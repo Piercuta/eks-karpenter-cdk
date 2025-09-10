@@ -4,6 +4,7 @@ from cdk_constructs.vpc.automatic_vpc import AutomaticVpc
 from aws_cdk import aws_ec2 as ec2
 from config.base_config import InfrastructureConfig
 from cdk_constructs.vpc.custom_vpc_v2 import CustomVpcV2
+from aws_cdk import aws_iam as iam
 
 
 class NetworkStack(Stack):
@@ -85,8 +86,34 @@ class NetworkStack(Stack):
         self.vpc = my_vpc.vpc_v2
 
         # Global tags for the stack
+        self.s3_vpc_endpoint = self._create_s3_vpc_endpoint()
+
         self.config.add_stack_global_tags(self)
 
+    def _create_s3_vpc_endpoint(self):
+        """
+        Create S3 VPC Endpoint to allow EKS pods to access S3 bucket
+        without going through the internet gateway.
+        """
+        s3_endpoint = self.vpc.add_gateway_endpoint(
+            "S3Endpoint",
+            service=ec2.GatewayVpcEndpointAwsService.S3,
+            subnets=[
+                ec2.SubnetSelection(subnet_group_name="eks-private-nat"),
+            ]
+        )
+
+        # Add tags to the endpoint
+        s3_endpoint.add_to_policy(
+            iam.PolicyStatement(
+                effect=iam.Effect.ALLOW,
+                principals=[iam.AnyPrincipal()],
+                actions=["s3:GetObject", "s3:PutObject", "s3:DeleteObject"],
+                resources=[f"arn:aws:s3:::{self.config.prefix('media-bucket')}/*"]
+            )
+        )
+
+        return s3_endpoint
     # def _get_manual_subnets(self, all_subnets, subnet_group_name):
     #     return [
     #         ec2.Subnet.from_subnet_attributes(

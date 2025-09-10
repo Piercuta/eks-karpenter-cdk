@@ -33,7 +33,7 @@ class StaticWebsite(Construct):
         # 4. Response Headers Policy (CORS)
         cors_policy = cloudfront.ResponseHeadersPolicy(
             self, "CorsPolicy",
-            response_headers_policy_name=config.prefix("AllowCORS"),
+            response_headers_policy_name=config.prefix("frontend-cors-policy"),
             cors_behavior=cloudfront.ResponseHeadersCorsBehavior(
                 access_control_allow_credentials=False,
                 access_control_allow_headers=["*"],
@@ -41,7 +41,7 @@ class StaticWebsite(Construct):
                 access_control_allow_origins=["*"],
                 origin_override=True
             ),
-            comment="Allow CORS from any origin"
+            comment="Allow CORS from any origin for frontend"
         )
 
         # Create CloudFront Distribution
