@@ -1,55 +1,53 @@
-from aws_cdk import Stack, RemovalPolicy
-from aws_cdk import aws_codebuild as codebuild
-from aws_cdk import aws_codepipeline as codepipeline
-from aws_cdk import aws_codepipeline_actions as codepipeline_actions
+from aws_cdk import Stack
+from constructs import Construct
+from aws_cdk import aws_eks as eks
+from aws_cdk import aws_ec2 as ec2
 from aws_cdk import aws_iam as iam
 from aws_cdk import aws_ecr as ecr
 from aws_cdk import aws_s3 as s3
 from aws_cdk import aws_logs as logs
-from config.base_config import InfrastructureConfig
-from constructs import Construct
-from aws_cdk import aws_eks as eks
-from cdk_constructs.eks.eks_utils import create_standard_admin_access_entry, create_pod_identity_association
+from aws_cdk import aws_codebuild as codebuild
+from aws_cdk import aws_codepipeline as codepipeline
+from aws_cdk import aws_codepipeline_actions as codepipeline_actions
 from aws_cdk import aws_s3_assets as s3_assets
 from aws_cdk import Duration
-from aws_cdk import aws_elasticloadbalancingv2 as elbv2
-from aws_cdk import aws_ec2 as ec2
+from aws_cdk import RemovalPolicy
+from cdk_constructs.eks.eks_utils import create_standard_admin_access_entry, create_pod_identity_association
+from config.base_config import InfrastructureConfig
 
 
-class CICDK8sFastAPIStack(Stack):
+class CICDK8sFileServiceStack(Stack):
     def __init__(self,
                  scope: Construct,
                  construct_id: str,
                  eks_cluster: eks.CfnCluster,
-                 db_endpoint: str,
-                 db_secret_arn: str,
-                 eks_fastapi_sg: ec2.SecurityGroup,
-                 karpenter_node_role: iam.Role,
+                 eks_workload_sg: ec2.SecurityGroup,
+                 distribution_domain_name: str,
+                 bucket_distribution_name: str,
                  config: InfrastructureConfig,
                  **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
         self.config = config
         self.eks_cluster = eks_cluster
-        self.karpenter_node_role = karpenter_node_role
-        self.fastapi_codebuild_role = self._create_fastapi_codebuild_role_and_access_entry()
-        self.fastapi_service_account_role = self._create_fastapi_service_account_role()
-        self.db_endpoint = db_endpoint
-        self.db_secret_arn = db_secret_arn
-        self.eks_fastapi_sg = eks_fastapi_sg
-        self._create_fastapi_pipeline()
-        self._create_fastapi_gitops_env_pipeline()
+        self.file_service_codebuild_role = self._create_file_service_codebuild_role_and_access_entry()
+        self.file_service_service_account_role = self._create_file_service_service_account_role()
+        self.eks_workload_sg = eks_workload_sg
+        self.distribution_domain_name = distribution_domain_name
+        self.bucket_distribution_name = bucket_distribution_name
+        self._create_file_service_pipeline()
+        self._create_file_service_gitops_env_pipeline()
         self.config.add_stack_global_tags(self)
 
-    def _create_fastapi_codebuild_role_and_access_entry(self) -> iam.Role:
-        """Create IAM role for FastAPI CodeBuild."""
+    def _create_file_service_codebuild_role_and_access_entry(self) -> iam.Role:
+        """Create IAM role for File Service CodeBuild."""
         role = iam.Role(
-            self, "FastApiCodeBuildRole",
-            role_name=self.config.prefix("fastapi-codebuild-role"),
+            self, "FileServiceCodeBuildRole",
+            role_name=self.config.prefix("file-service-codebuild-role"),
             assumed_by=iam.ServicePrincipal("codebuild.amazonaws.com"),
             managed_policies=[
                 iam.ManagedPolicy.from_aws_managed_policy_name("AWSCodeBuildDeveloperAccess"),
             ],
-            description="IAM role for FastAPI CodeBuild service",
+            description="IAM role for File Service CodeBuild service",
         )
 
         # Add EKS and ECR permissions
@@ -74,14 +72,14 @@ class CICDK8sFastAPIStack(Stack):
 
         create_standard_admin_access_entry(
             scope=self,
-            id="AccessEntryFastApi",
+            id="AccessEntryFileService",
             cluster_name=self.eks_cluster.name,
             principal_arn=role.role_arn,
         )
 
         return role
 
-    def _create_fastapi_service_account_role(self) -> iam.Role:
+    def _create_file_service_service_account_role(self) -> iam.Role:
         trust_policy = iam.PolicyDocument(
             statements=[
                 iam.PolicyStatement(
@@ -98,18 +96,22 @@ class CICDK8sFastAPIStack(Stack):
         )
 
         role = iam.CfnRole(
-            self, "FastApiServiceAccountRole",
-            role_name=self.config.prefix("fastapi-serviceaccount-role"),
+            self, "FileServiceServiceAccountRole",
+            role_name=self.config.prefix("file-service-serviceaccount-role"),
             assume_role_policy_document=trust_policy,
-            description="IAM role for FastAPI service account",
+            description="IAM role for File Service service account",
             policies=[
                 iam.CfnRole.PolicyProperty(
-                    policy_name="FastApiServiceAccountPolicy",
+                    policy_name="FileServiceServiceAccountPolicy",
                     policy_document=iam.PolicyDocument(
                         statements=[
                             iam.PolicyStatement(
                                 effect=iam.Effect.ALLOW,
-                                actions=["rds:*", "secretsmanager:*", "ecr:*", "kms:*"],
+                                actions=[
+                                    "s3:*",
+                                    "cloudfront:*",
+                                    "kms:*"
+                                ],
                                 resources=["*"]
                             )
                         ]
@@ -120,29 +122,28 @@ class CICDK8sFastAPIStack(Stack):
 
         create_pod_identity_association(
             scope=self,
-            id="FastApiServiceAccount",
+            id="FileServiceServiceAccount",
             cluster_name=self.eks_cluster.name,
-            namespace=f"fastapi",
-            service_account="fastapi-sa",
+            namespace=f"file-service",
+            service_account="file-service-sa",
             role_arn=role.get_att("Arn").to_string(),
             pod_identity_agent_dependency=role
         )
 
         return role
 
-    def _create_fastapi_pipeline(self):
-        """Create a simple pipeline that builds and pushes Docker image to ECR."""
-
+    def _create_file_service_pipeline(self):
+        """Create File Service pipeline."""
         # Import existing ECR repository
         ecr_repo = ecr.Repository.from_repository_name(
-            self, "FastApiEcrRepo",
-            repository_name=self.config.cicd_k8s_fastapi.ecr_repository_name
+            self, "FileServiceEcrRepo",
+            repository_name=self.config.cicd_k8s_file_service.ecr_repository_name
         )
 
         # Create S3 bucket for pipeline artifacts
         artifact_bucket = s3.Bucket(
             self, "PipelineArtifactBucket",
-            bucket_name=f"{self.config.prefix('pipeline-artifacts-fastapi')}",
+            bucket_name=f"{self.config.prefix('pipeline-artifacts-file-service')}",
             removal_policy=RemovalPolicy.DESTROY,
             auto_delete_objects=True,
             encryption=s3.BucketEncryption.S3_MANAGED,
@@ -154,8 +155,8 @@ class CICDK8sFastAPIStack(Stack):
 
         # Create pipeline
         pipeline = codepipeline.Pipeline(
-            self, "FastApiPipeline",
-            pipeline_name=self.config.prefix("fastapi-pipeline"),
+            self, "FileServicePipeline",
+            pipeline_name=self.config.prefix("file-service-pipeline"),
             artifact_bucket=artifact_bucket,
             cross_account_keys=False
         )
@@ -166,10 +167,10 @@ class CICDK8sFastAPIStack(Stack):
             actions=[
                 codepipeline_actions.CodeStarConnectionsSourceAction(
                     action_name="GitHubSource",
-                    owner=self.config.cicd_k8s_fastapi.github.owner,
-                    repo=self.config.cicd_k8s_fastapi.github.repo,
-                    branch=self.config.cicd_k8s_fastapi.github.branch,
-                    connection_arn=self.config.cicd_k8s_fastapi.github.connection_arn,
+                    owner=self.config.cicd_k8s_file_service.github.owner,
+                    repo=self.config.cicd_k8s_file_service.github.repo,
+                    branch=self.config.cicd_k8s_file_service.github.branch,
+                    connection_arn=self.config.cicd_k8s_file_service.github.connection_arn,
                     output=source_output,
                     code_build_clone_output=True
                 )
@@ -185,8 +186,8 @@ class CICDK8sFastAPIStack(Stack):
                     input=source_output,
                     project=codebuild.PipelineProject(
                         self, "BackendBuildProject",
-                        project_name=self.config.prefix("backend-build"),
-                        role=self.fastapi_codebuild_role,
+                        project_name=self.config.prefix("file-service-build"),
+                        role=self.file_service_codebuild_role,
                         environment=codebuild.BuildEnvironment(
                             build_image=codebuild.LinuxBuildImage.STANDARD_7_0,
                             privileged=True,
@@ -203,21 +204,21 @@ class CICDK8sFastAPIStack(Stack):
                                 value=ecr_repo.repository_name
                             ),
                             "IMAGE_TAG": codebuild.BuildEnvironmentVariable(
-                                value=self.config.cicd_k8s_fastapi.ecr_image_tag
+                                value=self.config.cicd_k8s_file_service.ecr_image_tag
                             ),
                             "ECR_REPOSITORY_URI": codebuild.BuildEnvironmentVariable(
                                 value=ecr_repo.repository_uri
                             ),
                             "BRANCH_NAME": codebuild.BuildEnvironmentVariable(
-                                value=self.config.cicd_k8s_fastapi.github.branch
+                                value=self.config.cicd_k8s_file_service.github.branch
                             )
                         },
                         build_spec=codebuild.BuildSpec.from_source_filename("buildspec.yml"),
                         logging=codebuild.LoggingOptions(
                             cloud_watch=codebuild.CloudWatchLoggingOptions(
                                 log_group=logs.LogGroup(
-                                    self, "BackendBuildLogGroup",
-                                    log_group_name=f"/aws/codebuild/{self.config.prefix('backend-build')}",
+                                    self, "FileServiceBuildLogGroup",
+                                    log_group_name=f"/aws/codebuild/{self.config.prefix('file-service-build')}",
                                     removal_policy=RemovalPolicy.DESTROY,
                                     retention=logs.RetentionDays.ONE_MONTH
                                 )
@@ -229,10 +230,10 @@ class CICDK8sFastAPIStack(Stack):
         )
 
         # Grant ECR permissions to the CodeBuild role
-        ecr_repo.grant_pull_push(self.fastapi_codebuild_role)
+        ecr_repo.grant_pull_push(self.file_service_codebuild_role)
 
         # Add permissions for ECR login
-        self.fastapi_codebuild_role.add_to_policy(iam.PolicyStatement(
+        self.file_service_codebuild_role.add_to_policy(iam.PolicyStatement(
             effect=iam.Effect.ALLOW,
             actions=[
                 "ecr:GetAuthorizationToken",
@@ -243,62 +244,53 @@ class CICDK8sFastAPIStack(Stack):
             resources=["*"]
         ))
 
-    def _create_fastapi_gitops_env_pipeline(self):
-        """Create the complete Kubernetes deployment pipeline with ArgoCD."""
+    def _create_file_service_gitops_env_pipeline(self):
+        """Create File Service gitops env pipeline."""
+        pipeline_assets = s3_assets.Asset(self, "FileServiceGitOpsEnvPipelineAssets",
+                                          path="./assets/pipelines/k8s_file_service")
 
-        pipeline_assets = s3_assets.Asset(self, "FastApiGitOpsEnvPipelineAssets", path="./assets/pipelines/k8s_fastapi")
-
-        artifact_bucket = s3.Bucket(self, "FastApiGitOpsEnvPipelineArtifacts",
-                                    bucket_name=self.config.prefix("fastapi-gitops-env-pipeline-artifacts"),
+        artifact_bucket = s3.Bucket(self, "FileServiceGitOpsEnvPipelineArtifacts",
+                                    bucket_name=self.config.prefix("file-service-gitops-env-pipeline-artifacts"),
                                     removal_policy=RemovalPolicy.DESTROY,
                                     auto_delete_objects=True)
 
         # Log group
-        log_group = logs.LogGroup(self, "FastApiGitOpsEnvPipelineLogs",
+        log_group = logs.LogGroup(self, "FileServiceGitOpsEnvPipelineLogs",
                                   removal_policy=RemovalPolicy.DESTROY)
 
         # Projet CodeBuild (le même que dans ton exemple précédent)
         build_project = codebuild.Project(
-            self, "FastApiGitOpsEnvCodeBuildProject",
-            project_name=self.config.prefix("fastapi-gitops-env-codebuild-project"),
+            self, "FileServiceGitOpsEnvCodeBuildProject",
+            project_name=self.config.prefix("file-service-gitops-env-codebuild-project"),
             environment=codebuild.BuildEnvironment(
                 build_image=codebuild.LinuxBuildImage.STANDARD_7_0,
                 privileged=True,
                 environment_variables={
                     "AWS_REGION": codebuild.BuildEnvironmentVariable(value=self.config.aws.region_str),
-                    "DOMAIN_NAME": codebuild.BuildEnvironmentVariable(value=self.config.dns.fastapi_domain_name),
+                    "CLOUDFRONT_DOMAIN": codebuild.BuildEnvironmentVariable(value=self.distribution_domain_name),
+                    "S3_BUCKET_NAME": codebuild.BuildEnvironmentVariable(value=self.bucket_distribution_name),
                     "ENV_NAME": codebuild.BuildEnvironmentVariable(value=self.config.env_name_str),
                     "CLUSTER_NAME": codebuild.BuildEnvironmentVariable(value=self.eks_cluster.name),
                     "PROJECT_NAME": codebuild.BuildEnvironmentVariable(value=self.config.project_name),
-                    "POSTGRES_SERVER": codebuild.BuildEnvironmentVariable(value=self.db_endpoint),
-                    "FRONTEND_HOST": codebuild.BuildEnvironmentVariable(value='https://' + self.config.frontend.domain_name),
-                    "AWS_SECRET_ARN": codebuild.BuildEnvironmentVariable(value=self.db_secret_arn),
-                    "CERTIFICATE_ARN": codebuild.BuildEnvironmentVariable(value=self.config.cicd_k8s_fastapi.certificate_arn),
                     "IMAGE_URL": codebuild.BuildEnvironmentVariable(
-                        value=f'{self.config.aws.account}.dkr.ecr.{self.config.aws.region_str}.amazonaws.com/{self.config.cicd_k8s_fastapi.ecr_repository_name}:{self.config.cicd_k8s_fastapi.ecr_image_tag}'),
-                    # kubernetes local url for file service
-                    "FILE_SERVICE_URL": codebuild.BuildEnvironmentVariable(
-                        value="http://file-service-svc.file-service.svc.cluster.local"),
-                    "CPU_CAPACITY": codebuild.BuildEnvironmentVariable(value=self.config.cicd_k8s_fastapi.cpu_capacity),
-                    "MEM_CAPACITY": codebuild.BuildEnvironmentVariable(value=self.config.cicd_k8s_fastapi.mem_capacity),
-                    "DESIRED_REPLICAS": codebuild.BuildEnvironmentVariable(value=self.config.cicd_k8s_fastapi.replicas),
-                    "MIN_REPLICAS": codebuild.BuildEnvironmentVariable(value=self.config.cicd_k8s_fastapi.min_replicas),
-                    "MAX_REPLICAS": codebuild.BuildEnvironmentVariable(value=self.config.cicd_k8s_fastapi.max_replicas),
-                    "SG_FASTAPI": codebuild.BuildEnvironmentVariable(value=self.eks_fastapi_sg.security_group_id),
+                        value=f'{self.config.aws.account}.dkr.ecr.{self.config.aws.region_str}.amazonaws.com/{self.config.cicd_k8s_file_service.ecr_repository_name}:{self.config.cicd_k8s_file_service.ecr_image_tag}'),
+                    "CPU_CAPACITY": codebuild.BuildEnvironmentVariable(value=self.config.cicd_k8s_file_service.cpu_capacity),
+                    "MEM_CAPACITY": codebuild.BuildEnvironmentVariable(value=self.config.cicd_k8s_file_service.mem_capacity),
+                    "DESIRED_REPLICAS": codebuild.BuildEnvironmentVariable(value=self.config.cicd_k8s_file_service.replicas),
                 },
             ),
             source=codebuild.Source.s3(bucket=pipeline_assets.bucket, path=pipeline_assets.s3_object_key),
             build_spec=codebuild.BuildSpec.from_source_filename("buildspec.yaml"),
             timeout=Duration.minutes(30),
             logging=codebuild.LoggingOptions(cloud_watch=codebuild.CloudWatchLoggingOptions(log_group=log_group)),
-            role=self.fastapi_codebuild_role,
+            role=self.file_service_codebuild_role,
         )
 
         # Crée la pipeline
         pipeline = codepipeline.Pipeline(
-            self, "FastApiGitOpsEnvCodePipeline",
+            self, "FileServiceGitOpsEnvCodePipeline",
             artifact_bucket=artifact_bucket,
-            pipeline_name=self.config.prefix("fastapi-gitops-env-pipeline")
+            pipeline_name=self.config.prefix("file-service-gitops-env-pipeline")
         )
 
         # Étape Source : simule une source S3 (l'asset)

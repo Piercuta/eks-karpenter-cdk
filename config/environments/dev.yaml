@@ -10,7 +10,8 @@ vpc:
   automatic_subnet_creation: false
 
 database:
-  snapshot_identifier: "piercuta-dev-aurora-cluster-snap"
+  # snapshot_identifier: "piercuta-dev-aurora-cluster-snap"
+  snapshot_identifier: "snap-avatar-migration" 
   snapshot_on_deletion: false
   backup_retention: 1
   serverless_v2_min_capacity: 0.5
@@ -29,6 +30,10 @@ eks:
 frontend:
   domain_name: dev-react.piercuta.com
   certificate_arn: "arn:aws:acm:us-east-1:532673134317:certificate/0755fa69-6f18-451a-8987-d98c395089b9"
+
+# media_storage:
+#   domain_name: dev-media.piercuta.com
+#   certificate_arn: "arn:aws:acm:us-east-1:532673134317:certificate/0755fa69-6f18-451a-8987-d98c395089b9"
 
 cicd_frontend:
   github:
@@ -53,6 +58,18 @@ cicd_k8s_fastapi:
     connection_arn: "arn:aws:codeconnections:eu-west-1:532673134317:connection/2a30a395-8d38-43ab-827b-f39a83c9986a"
     owner: "Piercuta"
     repo: "full-stack-fastapi-backend"
+    branch: "dev"
+
+cicd_k8s_file_service:
+  cpu_capacity: "1000m"
+  mem_capacity: "512Mi"
+  replicas: 1
+  ecr_repository_name: "services/eks/file-service"
+  ecr_image_tag: "dev"
+  github:
+    connection_arn: "arn:aws:codeconnections:eu-west-1:532673134317:connection/2a30a395-8d38-43ab-827b-f39a83c9986a"
+    owner: "Piercuta"
+    repo: "file-service-api"
     branch: "dev"
 
 dns:

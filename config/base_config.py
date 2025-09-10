@@ -240,6 +240,20 @@ class CICDK8SFastAPIConfig(BaseModel):
         return self
 
 
+class CICDK8SFileServiceConfig(BaseModel):
+    """
+    EKS file service configuration.
+    """
+    cpu_capacity: str = "1000m"
+    mem_capacity: str = "512Mi"
+    replicas: int = 1
+
+    ecr_repository_name: str = "services/eks/file-service"
+    ecr_image_tag: str = "dev"
+
+    github: GithubConfig = GithubConfig()
+
+
 class FrontendConfig(BaseModel):
     """
     CloudFront frontend configuration.
@@ -355,6 +369,7 @@ class InfrastructureConfig(BaseConfig):
     database: DatabaseConfig
     eks: EksConfig
     cicd_k8s_fastapi: CICDK8SFastAPIConfig
+    cicd_k8s_file_service: CICDK8SFileServiceConfig
     frontend: FrontendConfig
     cicd_frontend: CICDFrontendConfig
     dns: DnsConfig

@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: file-service-config
+  namespace: file-service
+data:
+  S3_BUCKET_NAME: ${S3_BUCKET_NAME}
+  CLOUDFRONT_DOMAIN: ${CLOUDFRONT_DOMAIN}

@@ -12,7 +12,7 @@ aws sts get-caller-identity --profile piercuta-dev
 
 #EKS
 
-aws eks update-kubeconfig --name karpenter-eks-cluster --region eu-west-1 --profile piercuta-dev
+aws eks update-kubeconfig --name piercuta-dev-eks-cluster --region eu-west-1 --profile piercuta-dev
 kubectl get namespaces
 kubectl get nodes
 kubectl get pods -n kube-system

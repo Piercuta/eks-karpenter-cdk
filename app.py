@@ -9,7 +9,9 @@ from stacks.dns_stack import DnsStack
 from stacks.cicd_frontend_stack import CICDFrontendStack
 from stacks.eks_backend_stack import EksBackendStack
 from stacks.cicd_k8s_fastapi_stack import CICDK8sFastAPIStack
-from stacks.cicd_k8S_deploy_stack import CICDK8sDeployStack
+from stacks.cicd_k8s_deploy_stack import CICDK8sDeployStack
+from stacks.media_stack import MediaStack
+from stacks.cicd_k8s_file_service_stack import CICDK8sFileServiceStack
 app = App()
 
 env_name = app.node.try_get_context('env') or 'dev'
@@ -90,6 +92,17 @@ frontend_stack = FrontendStack(
     config=config
 )
 
+media_stack = MediaStack(
+    app,
+    "MediaStack",
+    stack_name=config.prefix("media-stack"),
+    env=Environment(
+        account=config.aws.account,
+        region=config.aws.region_str
+    ),
+    config=config
+)
+
 cicd_frontend_stack = CICDFrontendStack(
     app,
     "CICDFrontendStack",
@@ -120,6 +133,24 @@ cicd_k8s_fastapi_stack = CICDK8sFastAPIStack(
 
 cicd_k8s_fastapi_stack.add_dependency(eks_backend_stack)
 
+cicd_k8s_file_service_stack = CICDK8sFileServiceStack(
+    app,
+    "CICDK8sFileServiceStack",
+    stack_name=config.prefix("cicd-k8s-file-service-stack"),
+    eks_cluster=eks_backend_stack.eks_cluster,
+    eks_workload_sg=security_stack.eks_workload_sg,
+    distribution_domain_name=media_stack.distribution_domain_name,
+    bucket_distribution_name=media_stack.bucket_distribution.bucket_name,
+    env=Environment(
+        account=config.aws.account,
+        region=config.aws.region_str
+    ),
+    config=config,
+)
+
+cicd_k8s_file_service_stack.add_dependency(eks_backend_stack)
+cicd_k8s_file_service_stack.add_dependency(media_stack)
+
 cicd_k8s_deploy_stack = CICDK8sDeployStack(
     app,
     "CICDK8sDeployStack",
@@ -138,6 +169,7 @@ cicd_k8s_deploy_stack = CICDK8sDeployStack(
 
 cicd_k8s_deploy_stack.add_dependency(cicd_k8s_fastapi_stack)
 cicd_k8s_deploy_stack.add_dependency(cicd_frontend_stack)
+cicd_k8s_deploy_stack.add_dependency(cicd_k8s_file_service_stack)
 
 dns_stack = DnsStack(
     app,
