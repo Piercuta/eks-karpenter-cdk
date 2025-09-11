@@ -1,0 +1,32 @@
+# Security Group Policy
+securityGroupPolicy:
+  enabled: true
+  securityGroupIds:
+  - ${SG_FASTAPI}
+
+# Environment variables for dev
+env:
+  ENV_NAME: ${ENV_NAME}
+  PROJECT_NAME: ${PROJECT_NAME}
+  POSTGRES_SERVER: ${POSTGRES_SERVER}
+  FRONTEND_HOST: ${FRONTEND_HOST}
+  AWS_REGION: ${AWS_REGION}
+  AWS_SECRET_ARN: ${AWS_SECRET_ARN}
+  FILE_SERVICE_URL: ${FILE_SERVICE_URL}
+
+image:
+  repository: ${IMAGE_URL}
+  tag: ${TAG}
+
+resources:
+  limits:
+    cpu: ${CPU_CAPACITY}
+    memory: ${MEM_CAPACITY}
+  requests:
+    cpu: ${CPU_CAPACITY}
+    memory: ${MEM_CAPACITY}
+
+
+autoscaling:
+  minReplicas: ${MIN_REPLICAS}
+  maxReplicas: ${MAX_REPLICAS}

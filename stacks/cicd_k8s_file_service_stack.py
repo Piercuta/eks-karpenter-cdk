@@ -22,7 +22,6 @@ class CICDK8sFileServiceStack(Stack):
                  construct_id: str,
                  eks_cluster: eks.CfnCluster,
                  eks_workload_sg: ec2.SecurityGroup,
-                 distribution_domain_name: str,
                  bucket_distribution_name: str,
                  config: InfrastructureConfig,
                  **kwargs) -> None:
@@ -32,7 +31,6 @@ class CICDK8sFileServiceStack(Stack):
         self.file_service_codebuild_role = self._create_file_service_codebuild_role_and_access_entry()
         self.file_service_service_account_role = self._create_file_service_service_account_role()
         self.eks_workload_sg = eks_workload_sg
-        self.distribution_domain_name = distribution_domain_name
         self.bucket_distribution_name = bucket_distribution_name
         self._create_file_service_pipeline()
         self._create_file_service_gitops_env_pipeline()
@@ -267,7 +265,7 @@ class CICDK8sFileServiceStack(Stack):
                 privileged=True,
                 environment_variables={
                     "AWS_REGION": codebuild.BuildEnvironmentVariable(value=self.config.aws.region_str),
-                    "CLOUDFRONT_DOMAIN": codebuild.BuildEnvironmentVariable(value=self.distribution_domain_name),
+                    "CLOUDFRONT_DOMAIN": codebuild.BuildEnvironmentVariable(value=self.config.dns.media_domain_name),
                     "S3_BUCKET_NAME": codebuild.BuildEnvironmentVariable(value=self.bucket_distribution_name),
                     "ENV_NAME": codebuild.BuildEnvironmentVariable(value=self.config.env_name_str),
                     "CLUSTER_NAME": codebuild.BuildEnvironmentVariable(value=self.eks_cluster.name),

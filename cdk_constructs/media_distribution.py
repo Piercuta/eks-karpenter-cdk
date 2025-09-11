@@ -62,11 +62,11 @@ class MediaDistribution(Construct):
             price_class=cloudfront.PriceClass.PRICE_CLASS_100,
             # enable_logging=True,
             # log_includes_cookies=True,
-            # domain_names=[config.dns.media_domain_name],
-            # certificate=acm.Certificate.from_certificate_arn(
-            #     self, "ImportedCert",
-            #     config.frontend.certificate_arn
-            # )
+            domain_names=[config.dns.media_domain_name],
+            certificate=acm.Certificate.from_certificate_arn(
+                self, "ImportedCert",
+                config.media_storage.certificate_arn
+            )
         )
 
         # add logs via cloudwatch or athena to see...

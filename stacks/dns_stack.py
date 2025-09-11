@@ -23,7 +23,7 @@ class DnsStack(Stack):
         self.hosted_zone = self._get_hosted_zone()
 
         self.frontend_dns_record = self._create_frontenddns_records()
-
+        self.media_storage_dns_record = self._create_media_storage_dns_records()
         # Global tags for the stack
         self.config.add_stack_global_tags(self)
 
@@ -48,6 +48,13 @@ class DnsStack(Stack):
             export_name="ArgocdDomainName"
         )
 
+        CfnOutput(
+            self, "MediaDomainName",
+            value=self.media_storage_dns_record.domain_name,
+            description="Nom de domaine du media storage",
+            export_name="MediaDomainName"
+        )
+
     def _get_hosted_zone(self):
         # Create Route53 zone
         hosted_zone = route53.HostedZone.from_hosted_zone_attributes(
@@ -64,6 +71,18 @@ class DnsStack(Stack):
             self, "FrontendDnsRecord",
             zone=self.hosted_zone,
             record_name=self.config.dns.frontend_domain_name,
+            target=route53.RecordTarget.from_alias(
+                targets.CloudFrontTarget(self.distribution)
+            ),
+            ttl=Duration.minutes(5)
+        )
+
+    def _create_media_storage_dns_records(self):
+        # Create A record for the media storage domain (CloudFront)
+        return route53.ARecord(
+            self, "MediaStorageDnsRecord",
+            zone=self.hosted_zone,
+            record_name=self.config.dns.media_domain_name,
             target=route53.RecordTarget.from_alias(
                 targets.CloudFrontTarget(self.distribution)
             ),

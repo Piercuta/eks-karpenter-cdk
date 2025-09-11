@@ -139,7 +139,6 @@ cicd_k8s_file_service_stack = CICDK8sFileServiceStack(
     stack_name=config.prefix("cicd-k8s-file-service-stack"),
     eks_cluster=eks_backend_stack.eks_cluster,
     eks_workload_sg=security_stack.eks_workload_sg,
-    distribution_domain_name=media_stack.distribution_domain_name,
     bucket_distribution_name=media_stack.bucket_distribution.bucket_name,
     env=Environment(
         account=config.aws.account,

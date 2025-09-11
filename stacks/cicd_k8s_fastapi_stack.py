@@ -275,7 +275,8 @@ class CICDK8sFastAPIStack(Stack):
                     "AWS_SECRET_ARN": codebuild.BuildEnvironmentVariable(value=self.db_secret_arn),
                     "CERTIFICATE_ARN": codebuild.BuildEnvironmentVariable(value=self.config.cicd_k8s_fastapi.certificate_arn),
                     "IMAGE_URL": codebuild.BuildEnvironmentVariable(
-                        value=f'{self.config.aws.account}.dkr.ecr.{self.config.aws.region_str}.amazonaws.com/{self.config.cicd_k8s_fastapi.ecr_repository_name}:{self.config.cicd_k8s_fastapi.ecr_image_tag}'),
+                        value=f'{self.config.aws.account}.dkr.ecr.{self.config.aws.region_str}.amazonaws.com/{self.config.cicd_k8s_fastapi.ecr_repository_name}'),
+                    "TAG": codebuild.BuildEnvironmentVariable(value=self.config.cicd_k8s_fastapi.ecr_image_tag),
                     # kubernetes local url for file service
                     "FILE_SERVICE_URL": codebuild.BuildEnvironmentVariable(
                         value="http://file-service-svc.file-service.svc.cluster.local"),
