@@ -274,6 +274,26 @@ class FrontendConfig(BaseModel):
     certificate_provider: str = "acm"
 
 
+class MediaStorageConfig(BaseModel):
+    """
+    CloudFront media storage configuration.
+
+    Defines parameters for CloudFront distribution and SSL certificate.
+
+    Attributes:
+        domain_name: Media storage domain name
+        certificate_arn: ACM certificate ARN
+        certificate_provider: Certificate provider (default: ACM)
+    """
+    domain_name: str = f"dev-media.piercuta.com"
+    certificate_arn: str = Field(
+        default="arn:aws:acm:us-east-1:532673134317:certificate/0755fa69-6f18-451a-8987-d98c395089b9",
+        pattern=r"^arn:aws:acm:[a-z0-9-]+:\d{12}:certificate/[a-zA-Z0-9-]+$",
+        description="ACM certificate ARN for media storage"
+    )
+    certificate_provider: str = "acm"
+
+
 class CICDFrontendConfig(BaseModel):
     """
     CI/CD pipeline configuration.
@@ -297,12 +317,14 @@ class DnsConfig(BaseModel):
         zone_name: DNS zone name
         frontend_domain_name: Frontend domain name
         fastapi_domain_name: Backend domain name
+        media_domain_name: Media storage domain name
     """
     hosted_zone_id: str = "Z0068506UV3AK4JBKP59"
     zone_name: str = "piercuta.com"
     frontend_domain_name: str = "dev-frontend.piercuta.com"
     fastapi_domain_name: str = "dev-fastapi.piercuta.com"
     argocd_domain_name: str = "dev-argocd.piercuta.com"
+    media_domain_name: str = "dev-media.piercuta.com"
 
 
 class InfrastructureConfig(BaseConfig):
@@ -318,6 +340,7 @@ class InfrastructureConfig(BaseConfig):
         database: Database configuration
         cicd_k8s_fastapi: CI/CD pipeline configuration
         frontend: CloudFront frontend configuration
+        media_storage: CloudFront media storage configuration
         cicd_frontend: CI/CD pipeline configuration
         dns: DNS configuration
 
@@ -352,6 +375,10 @@ class InfrastructureConfig(BaseConfig):
           domain_name: "dev-app.example.com"
           certificate_arn: "arn:aws:acm:..."
 
+        media_storage:
+          domain_name: "dev-media.example.com"
+          certificate_arn: "arn:aws:acm:..."
+
         cicd_frontend:
           github:
             owner: "my-org"
@@ -362,6 +389,10 @@ class InfrastructureConfig(BaseConfig):
         dns:
           hosted_zone_id: "Z1234567890"
           zone_name: "example.com"
+          frontend_domain_name: "dev-frontend.example.com"
+          fastapi_domain_name: "dev-fastapi.example.com"
+          argocd_domain_name: "dev-argocd.example.com"
+          media_domain_name: "dev-media.example.com"
         ```
     """
     aws: AwsConfig
@@ -371,5 +402,6 @@ class InfrastructureConfig(BaseConfig):
     cicd_k8s_fastapi: CICDK8SFastAPIConfig
     cicd_k8s_file_service: CICDK8SFileServiceConfig
     frontend: FrontendConfig
+    media_storage: MediaStorageConfig
     cicd_frontend: CICDFrontendConfig
     dns: DnsConfig

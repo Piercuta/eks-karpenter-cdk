@@ -4,7 +4,7 @@ import json
 import os
 from typing import Dict, Any
 from aws_cdk import App
-from .base_config import InfrastructureConfig, AwsConfig, VpcConfig, DatabaseConfig, EksConfig, FrontendConfig, DnsConfig, CICDFrontendConfig, CICDK8SFastAPIConfig, CICDK8SFileServiceConfig
+from .base_config import InfrastructureConfig, AwsConfig, VpcConfig, DatabaseConfig, EksConfig, FrontendConfig, DnsConfig, CICDFrontendConfig, CICDK8SFastAPIConfig, CICDK8SFileServiceConfig, MediaStorageConfig
 
 
 class ConfigLoader:
@@ -42,6 +42,7 @@ class ConfigLoader:
             'cicd_k8s_fastapi': CICDK8SFastAPIConfig(**env_config['cicd_k8s_fastapi']),
             'cicd_k8s_file_service': CICDK8SFileServiceConfig(**env_config['cicd_k8s_file_service']),
             'frontend': FrontendConfig(**env_config['frontend']),
+            'media_storage': MediaStorageConfig(**env_config['media_storage']),
             'cicd_frontend': CICDFrontendConfig(**env_config['cicd_frontend']),
             'dns': DnsConfig(**env_config['dns'])
         }

@@ -31,9 +31,9 @@ frontend:
   domain_name: dev-react.piercuta.com
   certificate_arn: "arn:aws:acm:us-east-1:532673134317:certificate/0755fa69-6f18-451a-8987-d98c395089b9"
 
-# media_storage:
-#   domain_name: dev-media.piercuta.com
-#   certificate_arn: "arn:aws:acm:us-east-1:532673134317:certificate/0755fa69-6f18-451a-8987-d98c395089b9"
+media_storage:
+  domain_name: dev-media.piercuta.com
+  certificate_arn: "arn:aws:acm:us-east-1:532673134317:certificate/0755fa69-6f18-451a-8987-d98c395089b9"
 
 cicd_frontend:
   github:
@@ -77,3 +77,4 @@ dns:
   frontend_domain_name: dev-react.piercuta.com
   fastapi_domain_name: dev-fast-api.piercuta.com
   argocd_domain_name: dev-argocd.piercuta.com
+  media_domain_name: dev-media.piercuta.com
