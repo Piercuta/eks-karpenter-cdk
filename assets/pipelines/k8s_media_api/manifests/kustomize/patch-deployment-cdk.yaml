@@ -1,8 +1,8 @@
 apiVersion: v1
 kind: Deployment
 metadata:
-  name: file-service-app
-  namespace: file-service
+  name: media-api-app
+  namespace: media-api-${ENV_NAME}
 spec:
   replicas: ${DESIRED_REPLICAS}
   strategy:
@@ -13,7 +13,7 @@ spec:
   template:
     spec:
       containers:
-      - name: file-service
+      - name: media-api
         image: ${IMAGE_URL}
         resources:
           requests:

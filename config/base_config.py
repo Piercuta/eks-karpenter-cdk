@@ -240,7 +240,7 @@ class CICDK8SMainAPIConfig(BaseModel):
         return self
 
 
-class CICDK8SFileServiceConfig(BaseModel):
+class CICDK8SMediaAPIConfig(BaseModel):
     """
     EKS file service configuration.
     """
@@ -400,7 +400,7 @@ class InfrastructureConfig(BaseConfig):
     database: DatabaseConfig
     eks: EksConfig
     cicd_k8s_main_api: CICDK8SMainAPIConfig
-    cicd_k8s_file_service: CICDK8SFileServiceConfig
+    cicd_k8s_media_api: CICDK8SMediaAPIConfig
     frontend: FrontendConfig
     media_storage: MediaStorageConfig
     cicd_frontend: CICDFrontendConfig

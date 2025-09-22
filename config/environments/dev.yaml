@@ -60,7 +60,7 @@ cicd_k8s_main_api:
     repo: "full-stack-fastapi-backend"
     branch: "dev"
 
-cicd_k8s_file_service:
+cicd_k8s_media_api:
   cpu_capacity: "1000m"
   mem_capacity: "512Mi"
   replicas: 1
