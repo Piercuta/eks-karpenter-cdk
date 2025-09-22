@@ -152,5 +152,6 @@ sudo cat /var/log/cloud-init-output.log
 sudo journalctl -u kubelet
 sudo journalctl -u containerd
 
+aws eks update-kubeconfig --name piercuta-dev-eks-cluster --region eu-west-1 --profile piercuta-dev
 kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d && echo
 kubectl port-forward -n argocd svc/argocd-server 8080:443
