@@ -23,12 +23,15 @@ phases:
       - git config --global user.name "ci-bot"
       - git clone https://x-access-token:$GITHUB_TOKEN@github.com/Piercuta/eks-karpenter-git-ops.git
       
-      - cp -r ./manifests/* eks-karpenter-git-ops/apps/file-service/${ENV_NAME}/patches/
-      - ls -la eks-karpenter-git-ops/apps/file-service/${ENV_NAME}/patches/
+      # - cp -r ./manifests/kustomize/* eks-karpenter-git-ops/apps/media-api/ksutomize/${ENV_NAME}/patches/
+      # - ls -la eks-karpenter-git-ops/apps/media-api/kustomize/${ENV_NAME}/patches/
+
+      - cp -r ./manifests/helm/values-dev-cdk.yaml eks-karpenter-git-ops/apps/media-api/helm/
+      - ls -la eks-karpenter-git-ops/apps/media-api/helm/
 
       - cd eks-karpenter-git-ops
       - git add .
-      - git commit -m "CDK CICD K8s FileService - ${PROJECT_NAME} - ${ENV_NAME} - update all values for file-service" || echo "Nothing to commit"
+      - git commit -m "CDK CICD K8s Media API - ${PROJECT_NAME} - ${ENV_NAME} - update all values for media-api" || echo "Nothing to commit"
       - git push
 artifacts:
   files:

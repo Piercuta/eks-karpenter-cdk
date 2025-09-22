@@ -83,7 +83,6 @@ class CICDK8sDeployStack(Stack):
                     "KARPENTER_NODE_ROLE": codebuild.BuildEnvironmentVariable(value=self.karpenter_node_role.role_name),
                     "EKS_NODE_ROLE": codebuild.BuildEnvironmentVariable(value=self.eks_node_role.role_name),
                     "CERTIFICATE_ARN": codebuild.BuildEnvironmentVariable(value=self.config.cicd_k8s_fastapi.certificate_arn),
-                    "FASTAPI_DOMAIN_NAME": codebuild.BuildEnvironmentVariable(value=self.config.dns.fastapi_domain_name),
                     "ARGOCD_DOMAIN_NAME": codebuild.BuildEnvironmentVariable(value=self.config.dns.argocd_domain_name),
                     "ALB_SG_ID": codebuild.BuildEnvironmentVariable(value=self.alb_sg.security_group_id),
                 },

@@ -122,8 +122,8 @@ class CICDK8sFileServiceStack(Stack):
             scope=self,
             id="FileServiceServiceAccount",
             cluster_name=self.eks_cluster.name,
-            namespace=f"file-service",
-            service_account="file-service-sa",
+            namespace=f"media-api-{self.config.env_name_str}",
+            service_account="media-api",
             role_arn=role.get_att("Arn").to_string(),
             pod_identity_agent_dependency=role
         )
@@ -271,7 +271,8 @@ class CICDK8sFileServiceStack(Stack):
                     "CLUSTER_NAME": codebuild.BuildEnvironmentVariable(value=self.eks_cluster.name),
                     "PROJECT_NAME": codebuild.BuildEnvironmentVariable(value=self.config.project_name),
                     "IMAGE_URL": codebuild.BuildEnvironmentVariable(
-                        value=f'{self.config.aws.account}.dkr.ecr.{self.config.aws.region_str}.amazonaws.com/{self.config.cicd_k8s_file_service.ecr_repository_name}:{self.config.cicd_k8s_file_service.ecr_image_tag}'),
+                        value=f'{self.config.aws.account}.dkr.ecr.{self.config.aws.region_str}.amazonaws.com/{self.config.cicd_k8s_file_service.ecr_repository_name}'),
+                    "TAG": codebuild.BuildEnvironmentVariable(value=self.config.cicd_k8s_file_service.ecr_image_tag),
                     "CPU_CAPACITY": codebuild.BuildEnvironmentVariable(value=self.config.cicd_k8s_file_service.cpu_capacity),
                     "MEM_CAPACITY": codebuild.BuildEnvironmentVariable(value=self.config.cicd_k8s_file_service.mem_capacity),
                     "DESIRED_REPLICAS": codebuild.BuildEnvironmentVariable(value=self.config.cicd_k8s_file_service.replicas),

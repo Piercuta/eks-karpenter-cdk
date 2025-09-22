@@ -25,7 +25,7 @@ for subdir in root_path.iterdir():
     if not subdir.is_dir():
         continue
 
-    for yaml_path in subdir.glob("*.yaml"):
+    for yaml_path in subdir.rglob("*.yaml"):
         try:
             with open(yaml_path, "r") as f:
                 data = yaml.safe_load(f)

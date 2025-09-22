@@ -12,7 +12,6 @@ env:
   FRONTEND_HOST: ${FRONTEND_HOST}
   AWS_REGION: ${AWS_REGION}
   AWS_SECRET_ARN: ${AWS_SECRET_ARN}
-  FILE_SERVICE_URL: ${FILE_SERVICE_URL}
 
 image:
   repository: ${IMAGE_URL}
@@ -30,3 +29,16 @@ resources:
 autoscaling:
   minReplicas: ${MIN_REPLICAS}
   maxReplicas: ${MAX_REPLICAS}
+
+ingress:
+  annotations:
+    alb.ingress.kubernetes.io/certificate-arn: ${CERTIFICATE_ARN}
+    alb.ingress.kubernetes.io/security-groups: ${ALB_SG_ID}
+    external-dns.alpha.kubernetes.io/hostname: ${FASTAPI_DOMAIN_NAME}
+  tls:
+  - hosts:
+    - ${FASTAPI_DOMAIN_NAME}
+  rules:
+  - paths:
+        - path: /
+          pathType: Prefix

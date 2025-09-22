@@ -1,0 +1,16 @@
+env:
+  CLOUDFRONT_DOMAIN: ${CLOUDFRONT_DOMAIN}
+  S3_BUCKET_NAME: ${S3_BUCKET_NAME}
+image:
+  repository: ${IMAGE_URL}
+  tag: ${TAG}
+
+resources:
+  limits:
+    cpu: ${CPU_CAPACITY}
+    memory: ${MEM_CAPACITY}
+  requests:
+    cpu: ${CPU_CAPACITY}
+    memory: ${MEM_CAPACITY}
+
+replicaCount: ${DESIRED_REPLICAS}

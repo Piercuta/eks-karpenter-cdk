@@ -122,6 +122,7 @@ cicd_k8s_fastapi_stack = CICDK8sFastAPIStack(
     eks_cluster=eks_backend_stack.eks_cluster,
     db_endpoint=database_stack.db_endpoint,
     eks_fastapi_sg=security_stack.eks_fastapi_sg,
+    alb_sg=security_stack.alb_security_group,
     karpenter_node_role=eks_backend_stack.karpenter_node_role,
     db_secret_arn=database_stack.db_secret_arn,
     env=Environment(

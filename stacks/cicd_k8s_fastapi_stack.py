@@ -24,6 +24,7 @@ class CICDK8sFastAPIStack(Stack):
                  db_endpoint: str,
                  db_secret_arn: str,
                  eks_fastapi_sg: ec2.SecurityGroup,
+                 alb_sg: ec2.SecurityGroup,
                  karpenter_node_role: iam.Role,
                  config: InfrastructureConfig,
                  **kwargs) -> None:
@@ -36,6 +37,7 @@ class CICDK8sFastAPIStack(Stack):
         self.db_endpoint = db_endpoint
         self.db_secret_arn = db_secret_arn
         self.eks_fastapi_sg = eks_fastapi_sg
+        self.alb_sg = alb_sg
         self._create_fastapi_pipeline()
         self._create_fastapi_gitops_env_pipeline()
         self.config.add_stack_global_tags(self)
@@ -122,8 +124,8 @@ class CICDK8sFastAPIStack(Stack):
             scope=self,
             id="FastApiServiceAccount",
             cluster_name=self.eks_cluster.name,
-            namespace=f"fastapi",
-            service_account="fastapi-sa",
+            namespace=f"main-api-{self.config.env_name_str}",
+            service_account="main-api",
             role_arn=role.get_att("Arn").to_string(),
             pod_identity_agent_dependency=role
         )
@@ -278,14 +280,15 @@ class CICDK8sFastAPIStack(Stack):
                         value=f'{self.config.aws.account}.dkr.ecr.{self.config.aws.region_str}.amazonaws.com/{self.config.cicd_k8s_fastapi.ecr_repository_name}'),
                     "TAG": codebuild.BuildEnvironmentVariable(value=self.config.cicd_k8s_fastapi.ecr_image_tag),
                     # kubernetes local url for file service
-                    "FILE_SERVICE_URL": codebuild.BuildEnvironmentVariable(
-                        value="http://file-service-svc.file-service.svc.cluster.local"),
                     "CPU_CAPACITY": codebuild.BuildEnvironmentVariable(value=self.config.cicd_k8s_fastapi.cpu_capacity),
                     "MEM_CAPACITY": codebuild.BuildEnvironmentVariable(value=self.config.cicd_k8s_fastapi.mem_capacity),
                     "DESIRED_REPLICAS": codebuild.BuildEnvironmentVariable(value=self.config.cicd_k8s_fastapi.replicas),
                     "MIN_REPLICAS": codebuild.BuildEnvironmentVariable(value=self.config.cicd_k8s_fastapi.min_replicas),
                     "MAX_REPLICAS": codebuild.BuildEnvironmentVariable(value=self.config.cicd_k8s_fastapi.max_replicas),
                     "SG_FASTAPI": codebuild.BuildEnvironmentVariable(value=self.eks_fastapi_sg.security_group_id),
+
+                    "FASTAPI_DOMAIN_NAME": codebuild.BuildEnvironmentVariable(value=self.config.dns.fastapi_domain_name),
+                    "ALB_SG_ID": codebuild.BuildEnvironmentVariable(value=self.alb_sg.security_group_id),
                 },
             ),
             source=codebuild.Source.s3(bucket=pipeline_assets.bucket, path=pipeline_assets.s3_object_key),
