@@ -1,8 +1,8 @@
 apiVersion: autoscaling/v1
 kind: HorizontalPodAutoscaler
 metadata:
-  name: fastapi-hpa
-  namespace: fastapi
+  name: main-api
+  namespace: main-api-${ENV_NAME}
 spec:
   minReplicas: ${MIN_REPLICAS}
   maxReplicas: ${MAX_REPLICAS}

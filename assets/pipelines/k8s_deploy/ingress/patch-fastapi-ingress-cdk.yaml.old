@@ -1,13 +1,13 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: fastapi-ingress
-  namespace: fastapi
+  name: main-api-ingress
+  namespace: main-api
   annotations:
     alb.ingress.kubernetes.io/security-groups: ${ALB_SG_ID}
     alb.ingress.kubernetes.io/certificate-arn: ${CERTIFICATE_ARN}
-    external-dns.alpha.kubernetes.io/hostname: ${FASTAPI_DOMAIN_NAME}
+    external-dns.alpha.kubernetes.io/hostname: ${MAIN_API_DOMAIN_NAME}
 spec:
   tls:
     - hosts:
-        - ${FASTAPI_DOMAIN_NAME}
+        - ${MAIN_API_DOMAIN_NAME}

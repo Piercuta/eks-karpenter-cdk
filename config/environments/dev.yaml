@@ -28,11 +28,11 @@ eks:
     desired_size: 1
 
 frontend:
-  domain_name: dev-react.piercuta.com
+  domain_name: frontend-dev.piercuta.com
   certificate_arn: "arn:aws:acm:us-east-1:532673134317:certificate/0755fa69-6f18-451a-8987-d98c395089b9"
 
 media_storage:
-  domain_name: dev-media.piercuta.com
+  domain_name: media-api-dev.piercuta.com
   certificate_arn: "arn:aws:acm:us-east-1:532673134317:certificate/0755fa69-6f18-451a-8987-d98c395089b9"
 
 cicd_frontend:
@@ -42,7 +42,7 @@ cicd_frontend:
     repo: "full-stack-fastapi-front"
     branch: "dev"
 
-cicd_k8s_fastapi:
+cicd_k8s_main_api:
   cpu_capacity: "1000m"
   mem_capacity: "512Mi"
   # replicas: 3
@@ -74,7 +74,7 @@ cicd_k8s_file_service:
 
 dns:
   hosted_zone_id: Z0068506UV3AK4JBKP59
-  frontend_domain_name: dev-react.piercuta.com
-  fastapi_domain_name: dev-fast-api.piercuta.com
-  argocd_domain_name: dev-argocd.piercuta.com
-  media_domain_name: dev-media.piercuta.com
+  frontend_domain_name: frontend-dev.piercuta.com
+  main_api_domain_name: main-api-dev.piercuta.com
+  argocd_domain_name: argocd-dev.piercuta.com
+  media_domain_name: media-api-dev.piercuta.com

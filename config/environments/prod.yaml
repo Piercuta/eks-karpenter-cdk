@@ -53,4 +53,4 @@ cicd_backend:
 dns:
   hosted_zone_id: Z0068506UV3AK4JBKP59
   frontend_domain_name: frontend.piercuta.com
-  fastapi_domain_name: api.piercuta.com
+  main_api_domain_name: api.piercuta.com

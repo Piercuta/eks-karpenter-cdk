@@ -2,7 +2,7 @@
 securityGroupPolicy:
   enabled: true
   securityGroupIds:
-  - ${SG_FASTAPI}
+  - ${SG_MAIN_API}
 
 # Environment variables for dev
 env:
@@ -34,10 +34,10 @@ ingress:
   annotations:
     alb.ingress.kubernetes.io/certificate-arn: ${CERTIFICATE_ARN}
     alb.ingress.kubernetes.io/security-groups: ${ALB_SG_ID}
-    external-dns.alpha.kubernetes.io/hostname: ${FASTAPI_DOMAIN_NAME}
+    external-dns.alpha.kubernetes.io/hostname: ${MAIN_API_DOMAIN_NAME}
   tls:
   - hosts:
-    - ${FASTAPI_DOMAIN_NAME}
+    - ${MAIN_API_DOMAIN_NAME}
   rules:
   - paths:
         - path: /

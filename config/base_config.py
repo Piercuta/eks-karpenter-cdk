@@ -188,7 +188,7 @@ class GithubConfig(BaseModel):
     branch: str = "dev"
 
 
-class CICDK8SFastAPIConfig(BaseModel):
+class CICDK8SMainAPIConfig(BaseModel):
     """
     ECS backend configuration.
 
@@ -316,15 +316,15 @@ class DnsConfig(BaseModel):
         hosted_zone_id: Route53 hosted zone ID
         zone_name: DNS zone name
         frontend_domain_name: Frontend domain name
-        fastapi_domain_name: Backend domain name
+        main_api_domain_name: Backend domain name
         media_domain_name: Media storage domain name
     """
     hosted_zone_id: str = "Z0068506UV3AK4JBKP59"
     zone_name: str = "piercuta.com"
     frontend_domain_name: str = "dev-frontend.piercuta.com"
-    fastapi_domain_name: str = "dev-fastapi.piercuta.com"
+    main_api_domain_name: str = "dev-main-api.piercuta.com"
     argocd_domain_name: str = "dev-argocd.piercuta.com"
-    media_domain_name: str = "dev-media.piercuta.com"
+    media_domain_name: str = "dev-media-api.piercuta.com"
 
 
 class InfrastructureConfig(BaseConfig):
@@ -338,7 +338,7 @@ class InfrastructureConfig(BaseConfig):
         aws: Base AWS configuration
         vpc: VPC network configuration
         database: Database configuration
-        cicd_k8s_fastapi: CI/CD pipeline configuration
+        cicd_k8s_main_api: CI/CD pipeline configuration
         frontend: CloudFront frontend configuration
         media_storage: CloudFront media storage configuration
         cicd_frontend: CI/CD pipeline configuration
@@ -364,7 +364,7 @@ class InfrastructureConfig(BaseConfig):
           serverless_v2_min_capacity: 0.5
           serverless_v2_max_capacity: 2.0
 
-        cicd_k8s_fastapi:
+        cicd_k8s_main_api:
           task_cpu: CPU_512
           task_memory: MEM_1024
           desired_count: 2
@@ -390,7 +390,7 @@ class InfrastructureConfig(BaseConfig):
           hosted_zone_id: "Z1234567890"
           zone_name: "example.com"
           frontend_domain_name: "dev-frontend.example.com"
-          fastapi_domain_name: "dev-fastapi.example.com"
+          main_api_domain_name: "dev-fastapi.example.com"
           argocd_domain_name: "dev-argocd.example.com"
           media_domain_name: "dev-media.example.com"
         ```
@@ -399,7 +399,7 @@ class InfrastructureConfig(BaseConfig):
     vpc: VpcConfig
     database: DatabaseConfig
     eks: EksConfig
-    cicd_k8s_fastapi: CICDK8SFastAPIConfig
+    cicd_k8s_main_api: CICDK8SMainAPIConfig
     cicd_k8s_file_service: CICDK8SFileServiceConfig
     frontend: FrontendConfig
     media_storage: MediaStorageConfig

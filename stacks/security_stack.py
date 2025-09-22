@@ -63,27 +63,27 @@ class SecurityStack(Stack):
         )
         Tags.of(self.eks_cluster_additional_sg).add("Name", eks_cluster_additional_sg_name)
 
-        # Create EKS FastAPI Security Group for security group for pods
-        eks_fastapi_sg_name = self.config.prefix("eks-fastapi-sg")
-        self.eks_fastapi_sg = ec2.SecurityGroup(
-            self, "EKSFastAPISecurityGroup",
+        # Create EKS MainAPI Security Group for security group for pods
+        eks_main_api_sg_name = self.config.prefix("eks-main-api-sg")
+        self.eks_main_api_sg = ec2.SecurityGroup(
+            self, "EKSMainAPISecurityGroup",
             vpc=vpc,
-            description="Security group for EKS FastAPI",
-            security_group_name=eks_fastapi_sg_name
+            description="Security group for EKS MainAPI",
+            security_group_name=eks_main_api_sg_name
         )
-        Tags.of(self.eks_fastapi_sg).add("Name", eks_fastapi_sg_name)
+        Tags.of(self.eks_main_api_sg).add("Name", eks_main_api_sg_name)
 
-        # Allow all TCP traffic between FastAPI pods
+        # Allow all TCP traffic between MainAPI pods
         self.eks_workload_sg.add_ingress_rule(
             peer=self.eks_workload_sg,
             connection=ec2.Port.all_traffic(),
-            description="Allow all TCP traffic between FastAPI pods"
+            description="Allow all TCP traffic between MainAPI pods"
         )
 
-        self.eks_fastapi_sg.add_ingress_rule(
-            peer=self.eks_fastapi_sg,
+        self.eks_main_api_sg.add_ingress_rule(
+            peer=self.eks_main_api_sg,
             connection=ec2.Port.all_traffic(),
-            description="Allow all TCP traffic between FastAPI pods"
+            description="Allow all TCP traffic between MainAPI pods"
         )
 
         # Allow PostgreSQL access from RDS Lambda
@@ -101,7 +101,7 @@ class SecurityStack(Stack):
         # )
 
         self.rds_security_group.add_ingress_rule(
-            ec2.Peer.security_group_id(self.eks_fastapi_sg.security_group_id),
+            ec2.Peer.security_group_id(self.eks_main_api_sg.security_group_id),
             ec2.Port.tcp(5432),
             "Allow PostgreSQL access from EKS"
         )
@@ -109,13 +109,13 @@ class SecurityStack(Stack):
         # self.eks_workload_sg.add_ingress_rule(
         #     ec2.Peer.security_group_id(self.alb_security_group.security_group_id),
         #     ec2.Port.tcp(8000),
-        #     "Allow FastAPI traffic from ALB"
+        #     "Allow MainAPI traffic from ALB"
         # )
 
-        self.eks_fastapi_sg.add_ingress_rule(
+        self.eks_main_api_sg.add_ingress_rule(
             ec2.Peer.security_group_id(self.alb_security_group.security_group_id),
             ec2.Port.tcp(8000),
-            "Allow FastAPI traffic from ALB"
+            "Allow MainAPI traffic from ALB"
         )
 
         # Allow inbound HTTP/HTTPS traffic from anywhere

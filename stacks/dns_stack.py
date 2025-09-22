@@ -35,10 +35,10 @@ class DnsStack(Stack):
         )
 
         CfnOutput(
-            self, "FastApiDomainName",
-            value=self.config.dns.fastapi_domain_name,
-            description="Nom de domaine du fastapi",
-            export_name="FastApiDomainName"
+            self, "MainApiDomainName",
+            value=self.config.dns.main_api_domain_name,
+            description="Nom de domaine du main api",
+            export_name="MainApiDomainName"
         )
 
         CfnOutput(

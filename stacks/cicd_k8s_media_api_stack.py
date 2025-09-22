@@ -16,7 +16,7 @@ from cdk_constructs.eks.eks_utils import create_standard_admin_access_entry, cre
 from config.base_config import InfrastructureConfig
 
 
-class CICDK8sFileServiceStack(Stack):
+class CICDK8sMediaAPIStack(Stack):
     def __init__(self,
                  scope: Construct,
                  construct_id: str,
