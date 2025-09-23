@@ -43,7 +43,7 @@ class DnsStack(Stack):
 
         CfnOutput(
             self, "ArgocdDomainName",
-            value=f"{self.config.env_name_str}-argocd.piercuta.com",
+            value=f"argocd-{self.config.env_name_str}.piercuta.com",
             description="Nom de domaine du argocd",
             export_name="ArgocdDomainName"
         )
