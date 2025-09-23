@@ -16,7 +16,7 @@ from cdk_constructs.eks.eks_utils import create_standard_admin_access_entry, cre
 from config.base_config import InfrastructureConfig
 
 
-class CICDK8sFileServiceStack(Stack):
+class CICDK8sMediaAPIStack(Stack):
     def __init__(self,
                  scope: Construct,
                  construct_id: str,
@@ -28,19 +28,19 @@ class CICDK8sFileServiceStack(Stack):
         super().__init__(scope, construct_id, **kwargs)
         self.config = config
         self.eks_cluster = eks_cluster
-        self.file_service_codebuild_role = self._create_file_service_codebuild_role_and_access_entry()
-        self.file_service_service_account_role = self._create_file_service_service_account_role()
+        self.media_api_codebuild_role = self._create_media_api_codebuild_role_and_access_entry()
+        self.media_api_service_account_role = self._create_media_api_service_account_role()
         self.eks_workload_sg = eks_workload_sg
         self.bucket_distribution_name = bucket_distribution_name
-        self._create_file_service_pipeline()
-        self._create_file_service_gitops_env_pipeline()
+        self._create_media_api_pipeline()
+        self._create_media_api_gitops_env_pipeline()
         self.config.add_stack_global_tags(self)
 
-    def _create_file_service_codebuild_role_and_access_entry(self) -> iam.Role:
+    def _create_media_api_codebuild_role_and_access_entry(self) -> iam.Role:
         """Create IAM role for File Service CodeBuild."""
         role = iam.Role(
-            self, "FileServiceCodeBuildRole",
-            role_name=self.config.prefix("file-service-codebuild-role"),
+            self, "MediaApiCodeBuildRole",
+            role_name=self.config.prefix("media-api-codebuild-role"),
             assumed_by=iam.ServicePrincipal("codebuild.amazonaws.com"),
             managed_policies=[
                 iam.ManagedPolicy.from_aws_managed_policy_name("AWSCodeBuildDeveloperAccess"),
@@ -70,14 +70,14 @@ class CICDK8sFileServiceStack(Stack):
 
         create_standard_admin_access_entry(
             scope=self,
-            id="AccessEntryFileService",
+            id="AccessEntryMediaApi",
             cluster_name=self.eks_cluster.name,
             principal_arn=role.role_arn,
         )
 
         return role
 
-    def _create_file_service_service_account_role(self) -> iam.Role:
+    def _create_media_api_service_account_role(self) -> iam.Role:
         trust_policy = iam.PolicyDocument(
             statements=[
                 iam.PolicyStatement(
@@ -94,13 +94,13 @@ class CICDK8sFileServiceStack(Stack):
         )
 
         role = iam.CfnRole(
-            self, "FileServiceServiceAccountRole",
-            role_name=self.config.prefix("file-service-serviceaccount-role"),
+            self, "MediaApiServiceAccountRole",
+            role_name=self.config.prefix("media-api-serviceaccount-role"),
             assume_role_policy_document=trust_policy,
             description="IAM role for File Service service account",
             policies=[
                 iam.CfnRole.PolicyProperty(
-                    policy_name="FileServiceServiceAccountPolicy",
+                    policy_name="MediaApiServiceAccountPolicy",
                     policy_document=iam.PolicyDocument(
                         statements=[
                             iam.PolicyStatement(
@@ -120,7 +120,7 @@ class CICDK8sFileServiceStack(Stack):
 
         create_pod_identity_association(
             scope=self,
-            id="FileServiceServiceAccount",
+            id="MediaApiServiceAccount",
             cluster_name=self.eks_cluster.name,
             namespace=f"media-api-{self.config.env_name_str}",
             service_account="media-api",
@@ -130,18 +130,18 @@ class CICDK8sFileServiceStack(Stack):
 
         return role
 
-    def _create_file_service_pipeline(self):
+    def _create_media_api_pipeline(self):
         """Create File Service pipeline."""
         # Import existing ECR repository
         ecr_repo = ecr.Repository.from_repository_name(
-            self, "FileServiceEcrRepo",
-            repository_name=self.config.cicd_k8s_file_service.ecr_repository_name
+            self, "MediaApiEcrRepo",
+            repository_name=self.config.cicd_k8s_media_api.ecr_repository_name
         )
 
         # Create S3 bucket for pipeline artifacts
         artifact_bucket = s3.Bucket(
             self, "PipelineArtifactBucket",
-            bucket_name=f"{self.config.prefix('pipeline-artifacts-file-service')}",
+            bucket_name=f"{self.config.prefix('pipeline-artifacts-media-api')}",
             removal_policy=RemovalPolicy.DESTROY,
             auto_delete_objects=True,
             encryption=s3.BucketEncryption.S3_MANAGED,
@@ -153,8 +153,8 @@ class CICDK8sFileServiceStack(Stack):
 
         # Create pipeline
         pipeline = codepipeline.Pipeline(
-            self, "FileServicePipeline",
-            pipeline_name=self.config.prefix("file-service-pipeline"),
+            self, "MediaApiPipeline",
+            pipeline_name=self.config.prefix("media-api-pipeline"),
             artifact_bucket=artifact_bucket,
             cross_account_keys=False
         )
@@ -165,10 +165,10 @@ class CICDK8sFileServiceStack(Stack):
             actions=[
                 codepipeline_actions.CodeStarConnectionsSourceAction(
                     action_name="GitHubSource",
-                    owner=self.config.cicd_k8s_file_service.github.owner,
-                    repo=self.config.cicd_k8s_file_service.github.repo,
-                    branch=self.config.cicd_k8s_file_service.github.branch,
-                    connection_arn=self.config.cicd_k8s_file_service.github.connection_arn,
+                    owner=self.config.cicd_k8s_media_api.github.owner,
+                    repo=self.config.cicd_k8s_media_api.github.repo,
+                    branch=self.config.cicd_k8s_media_api.github.branch,
+                    connection_arn=self.config.cicd_k8s_media_api.github.connection_arn,
                     output=source_output,
                     code_build_clone_output=True
                 )
@@ -184,8 +184,8 @@ class CICDK8sFileServiceStack(Stack):
                     input=source_output,
                     project=codebuild.PipelineProject(
                         self, "BackendBuildProject",
-                        project_name=self.config.prefix("file-service-build"),
-                        role=self.file_service_codebuild_role,
+                        project_name=self.config.prefix("media-api-build"),
+                        role=self.media_api_codebuild_role,
                         environment=codebuild.BuildEnvironment(
                             build_image=codebuild.LinuxBuildImage.STANDARD_7_0,
                             privileged=True,
@@ -202,21 +202,21 @@ class CICDK8sFileServiceStack(Stack):
                                 value=ecr_repo.repository_name
                             ),
                             "IMAGE_TAG": codebuild.BuildEnvironmentVariable(
-                                value=self.config.cicd_k8s_file_service.ecr_image_tag
+                                value=self.config.cicd_k8s_media_api.ecr_image_tag
                             ),
                             "ECR_REPOSITORY_URI": codebuild.BuildEnvironmentVariable(
                                 value=ecr_repo.repository_uri
                             ),
                             "BRANCH_NAME": codebuild.BuildEnvironmentVariable(
-                                value=self.config.cicd_k8s_file_service.github.branch
+                                value=self.config.cicd_k8s_media_api.github.branch
                             )
                         },
                         build_spec=codebuild.BuildSpec.from_source_filename("buildspec.yml"),
                         logging=codebuild.LoggingOptions(
                             cloud_watch=codebuild.CloudWatchLoggingOptions(
                                 log_group=logs.LogGroup(
-                                    self, "FileServiceBuildLogGroup",
-                                    log_group_name=f"/aws/codebuild/{self.config.prefix('file-service-build')}",
+                                    self, "MediaApiBuildLogGroup",
+                                    log_group_name=f"/aws/codebuild/{self.config.prefix('media-api-build')}",
                                     removal_policy=RemovalPolicy.DESTROY,
                                     retention=logs.RetentionDays.ONE_MONTH
                                 )
@@ -228,10 +228,10 @@ class CICDK8sFileServiceStack(Stack):
         )
 
         # Grant ECR permissions to the CodeBuild role
-        ecr_repo.grant_pull_push(self.file_service_codebuild_role)
+        ecr_repo.grant_pull_push(self.media_api_codebuild_role)
 
         # Add permissions for ECR login
-        self.file_service_codebuild_role.add_to_policy(iam.PolicyStatement(
+        self.media_api_codebuild_role.add_to_policy(iam.PolicyStatement(
             effect=iam.Effect.ALLOW,
             actions=[
                 "ecr:GetAuthorizationToken",
@@ -242,24 +242,24 @@ class CICDK8sFileServiceStack(Stack):
             resources=["*"]
         ))
 
-    def _create_file_service_gitops_env_pipeline(self):
+    def _create_media_api_gitops_env_pipeline(self):
         """Create File Service gitops env pipeline."""
-        pipeline_assets = s3_assets.Asset(self, "FileServiceGitOpsEnvPipelineAssets",
-                                          path="./assets/pipelines/k8s_file_service")
+        pipeline_assets = s3_assets.Asset(self, "MediaApiGitOpsEnvPipelineAssets",
+                                          path="./assets/pipelines/k8s_media_api")
 
-        artifact_bucket = s3.Bucket(self, "FileServiceGitOpsEnvPipelineArtifacts",
-                                    bucket_name=self.config.prefix("file-service-gitops-env-pipeline-artifacts"),
+        artifact_bucket = s3.Bucket(self, "MediaApiGitOpsEnvPipelineArtifacts",
+                                    bucket_name=self.config.prefix("media-api-gitops-env-pipeline-artifacts"),
                                     removal_policy=RemovalPolicy.DESTROY,
                                     auto_delete_objects=True)
 
         # Log group
-        log_group = logs.LogGroup(self, "FileServiceGitOpsEnvPipelineLogs",
+        log_group = logs.LogGroup(self, "MediaApiGitOpsEnvPipelineLogs",
                                   removal_policy=RemovalPolicy.DESTROY)
 
         # Projet CodeBuild (le même que dans ton exemple précédent)
         build_project = codebuild.Project(
-            self, "FileServiceGitOpsEnvCodeBuildProject",
-            project_name=self.config.prefix("file-service-gitops-env-codebuild-project"),
+            self, "MediaApiGitOpsEnvCodeBuildProject",
+            project_name=self.config.prefix("media-api-gitops-env-codebuild-project"),
             environment=codebuild.BuildEnvironment(
                 build_image=codebuild.LinuxBuildImage.STANDARD_7_0,
                 privileged=True,
@@ -271,25 +271,25 @@ class CICDK8sFileServiceStack(Stack):
                     "CLUSTER_NAME": codebuild.BuildEnvironmentVariable(value=self.eks_cluster.name),
                     "PROJECT_NAME": codebuild.BuildEnvironmentVariable(value=self.config.project_name),
                     "IMAGE_URL": codebuild.BuildEnvironmentVariable(
-                        value=f'{self.config.aws.account}.dkr.ecr.{self.config.aws.region_str}.amazonaws.com/{self.config.cicd_k8s_file_service.ecr_repository_name}'),
-                    "TAG": codebuild.BuildEnvironmentVariable(value=self.config.cicd_k8s_file_service.ecr_image_tag),
-                    "CPU_CAPACITY": codebuild.BuildEnvironmentVariable(value=self.config.cicd_k8s_file_service.cpu_capacity),
-                    "MEM_CAPACITY": codebuild.BuildEnvironmentVariable(value=self.config.cicd_k8s_file_service.mem_capacity),
-                    "DESIRED_REPLICAS": codebuild.BuildEnvironmentVariable(value=self.config.cicd_k8s_file_service.replicas),
+                        value=f'{self.config.aws.account}.dkr.ecr.{self.config.aws.region_str}.amazonaws.com/{self.config.cicd_k8s_media_api.ecr_repository_name}'),
+                    "TAG": codebuild.BuildEnvironmentVariable(value=self.config.cicd_k8s_media_api.ecr_image_tag),
+                    "CPU_CAPACITY": codebuild.BuildEnvironmentVariable(value=self.config.cicd_k8s_media_api.cpu_capacity),
+                    "MEM_CAPACITY": codebuild.BuildEnvironmentVariable(value=self.config.cicd_k8s_media_api.mem_capacity),
+                    "DESIRED_REPLICAS": codebuild.BuildEnvironmentVariable(value=self.config.cicd_k8s_media_api.replicas),
                 },
             ),
             source=codebuild.Source.s3(bucket=pipeline_assets.bucket, path=pipeline_assets.s3_object_key),
             build_spec=codebuild.BuildSpec.from_source_filename("buildspec.yaml"),
             timeout=Duration.minutes(30),
             logging=codebuild.LoggingOptions(cloud_watch=codebuild.CloudWatchLoggingOptions(log_group=log_group)),
-            role=self.file_service_codebuild_role,
+            role=self.media_api_codebuild_role,
         )
 
         # Crée la pipeline
         pipeline = codepipeline.Pipeline(
-            self, "FileServiceGitOpsEnvCodePipeline",
+            self, "MediaApiGitOpsEnvCodePipeline",
             artifact_bucket=artifact_bucket,
-            pipeline_name=self.config.prefix("file-service-gitops-env-pipeline")
+            pipeline_name=self.config.prefix("media-api-gitops-env-pipeline")
         )
 
         # Étape Source : simule une source S3 (l'asset)

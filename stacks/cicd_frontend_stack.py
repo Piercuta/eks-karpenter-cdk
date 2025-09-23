@@ -55,7 +55,7 @@ class CICDFrontendStack(Stack):
                 privileged=True,
                 environment_variables={
                     "VITE_API_URL": codebuild.BuildEnvironmentVariable(
-                        value="https://" + self.config.dns.fastapi_domain_name
+                        value="https://" + self.config.dns.main_api_domain_name
                     ),
                     "BUCKET_NAME": codebuild.BuildEnvironmentVariable(
                         value=self.static_website.bucket.bucket_name

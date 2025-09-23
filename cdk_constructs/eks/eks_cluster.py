@@ -28,7 +28,7 @@ class EksCluster(Construct):
                  public_subnets: ec2.SubnetSelection,
                  eks_private_nat_subnets: ec2.SubnetSelection,
                  eks_workload_sg: ec2.SecurityGroup,
-                 eks_fastapi_sg: ec2.SecurityGroup,
+                 eks_main_api_sg: ec2.SecurityGroup,
                  alb_security_group: ec2.SecurityGroup,
                  eks_cluster_additional_sg: ec2.SecurityGroup,
                  db_endpoint: str,
@@ -43,7 +43,7 @@ class EksCluster(Construct):
         self.eks_private_nat_subnets = eks_private_nat_subnets
 
         self.eks_workload_sg = eks_workload_sg
-        self.eks_fastapi_sg = eks_fastapi_sg
+        self.eks_main_api_sg = eks_main_api_sg
         self.alb_security_group = alb_security_group
         self.eks_cluster_additional_sg = eks_cluster_additional_sg
         self.db_endpoint = db_endpoint
@@ -727,13 +727,13 @@ class EksCluster(Construct):
         )
 
         ingress_3 = ec2.CfnSecurityGroupIngress(
-            self, "EksClusterToFastApiIngress",
+            self, "EksClusterToMainApiIngress",
             group_id=self.eks_cluster.get_att("ClusterSecurityGroupId").to_string(),
             from_port=0,
             to_port=65535,
             ip_protocol="-1",
-            source_security_group_id=self.eks_fastapi_sg.security_group_id,
-            description="Allow all traffic between EKS cluster and fastapi pods"
+            source_security_group_id=self.eks_main_api_sg.security_group_id,
+            description="Allow all traffic between EKS cluster and main api pods"
         )
 
         ingress_4 = ec2.CfnSecurityGroupIngress(

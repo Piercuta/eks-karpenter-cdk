@@ -1,8 +1,8 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: fastapi-config
-  namespace: fastapi
+  name: main-api
+  namespace: main-api-${ENV_NAME}
 data:
   ENV_NAME: ${ENV_NAME}
   PROJECT_NAME: ${PROJECT_NAME}
@@ -10,4 +10,4 @@ data:
   FRONTEND_HOST: ${FRONTEND_HOST}
   AWS_REGION: ${AWS_REGION}
   AWS_SECRET_ARN: ${AWS_SECRET_ARN}
-  FILE_SERVICE_URL: ${FILE_SERVICE_URL}
+  MEDIA_API_URL: ${MEDIA_API_URL}

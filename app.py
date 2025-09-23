@@ -8,10 +8,10 @@ from config.loader import ConfigLoader
 from stacks.dns_stack import DnsStack
 from stacks.cicd_frontend_stack import CICDFrontendStack
 from stacks.eks_backend_stack import EksBackendStack
-from stacks.cicd_k8s_fastapi_stack import CICDK8sFastAPIStack
+from stacks.cicd_k8s_main_api_stack import CICDK8sMainAPIStack
 from stacks.cicd_k8s_deploy_stack import CICDK8sDeployStack
+from stacks.cicd_k8s_media_api_stack import CICDK8sMediaAPIStack
 from stacks.media_stack import MediaStack
-from stacks.cicd_k8s_file_service_stack import CICDK8sFileServiceStack
 app = App()
 
 env_name = app.node.try_get_context('env') or 'dev'
@@ -69,7 +69,7 @@ eks_backend_stack = EksBackendStack(
     public_subnets=network_stack.public_subnets,
     eks_private_nat_subnets=network_stack.eks_private_nat_subnets,
     eks_workload_sg=security_stack.eks_workload_sg,
-    eks_fastapi_sg=security_stack.eks_fastapi_sg,
+    eks_main_api_sg=security_stack.eks_main_api_sg,
     alb_security_group=security_stack.alb_security_group,
     eks_cluster_additional_sg=security_stack.eks_cluster_additional_sg,
     db_endpoint=database_stack.db_endpoint,
@@ -115,13 +115,13 @@ cicd_frontend_stack = CICDFrontendStack(
     config=config,
 )
 
-cicd_k8s_fastapi_stack = CICDK8sFastAPIStack(
+cicd_k8s_main_api_stack = CICDK8sMainAPIStack(
     app,
-    "CICDK8sFastAPIStack",
-    stack_name=config.prefix("cicd-k8s-fastapi-stack"),
+    "CICDK8sMainAPIStack",
+    stack_name=config.prefix("cicd-k8s-main-api-stack"),
     eks_cluster=eks_backend_stack.eks_cluster,
     db_endpoint=database_stack.db_endpoint,
-    eks_fastapi_sg=security_stack.eks_fastapi_sg,
+    eks_main_api_sg=security_stack.eks_main_api_sg,
     alb_sg=security_stack.alb_security_group,
     karpenter_node_role=eks_backend_stack.karpenter_node_role,
     db_secret_arn=database_stack.db_secret_arn,
@@ -132,12 +132,12 @@ cicd_k8s_fastapi_stack = CICDK8sFastAPIStack(
     config=config,
 )
 
-cicd_k8s_fastapi_stack.add_dependency(eks_backend_stack)
+cicd_k8s_main_api_stack.add_dependency(eks_backend_stack)
 
-cicd_k8s_file_service_stack = CICDK8sFileServiceStack(
+cicd_k8s_media_api_stack = CICDK8sMediaAPIStack(
     app,
-    "CICDK8sFileServiceStack",
-    stack_name=config.prefix("cicd-k8s-file-service-stack"),
+    "CICDK8sMediaAPIStack",
+    stack_name=config.prefix("cicd-k8s-media-api-stack"),
     eks_cluster=eks_backend_stack.eks_cluster,
     eks_workload_sg=security_stack.eks_workload_sg,
     bucket_distribution_name=media_stack.bucket_distribution.bucket_name,
@@ -148,8 +148,8 @@ cicd_k8s_file_service_stack = CICDK8sFileServiceStack(
     config=config,
 )
 
-cicd_k8s_file_service_stack.add_dependency(eks_backend_stack)
-cicd_k8s_file_service_stack.add_dependency(media_stack)
+cicd_k8s_media_api_stack.add_dependency(eks_backend_stack)
+cicd_k8s_media_api_stack.add_dependency(media_stack)
 
 cicd_k8s_deploy_stack = CICDK8sDeployStack(
     app,
@@ -167,9 +167,9 @@ cicd_k8s_deploy_stack = CICDK8sDeployStack(
     config=config,
 )
 
-cicd_k8s_deploy_stack.add_dependency(cicd_k8s_fastapi_stack)
+cicd_k8s_deploy_stack.add_dependency(cicd_k8s_main_api_stack)
 cicd_k8s_deploy_stack.add_dependency(cicd_frontend_stack)
-cicd_k8s_deploy_stack.add_dependency(cicd_k8s_file_service_stack)
+cicd_k8s_deploy_stack.add_dependency(cicd_k8s_media_api_stack)
 
 dns_stack = DnsStack(
     app,

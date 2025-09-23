@@ -82,7 +82,7 @@ class CICDK8sDeployStack(Stack):
                     "ACCOUNT_ID": codebuild.BuildEnvironmentVariable(value=self.config.aws.account),
                     "KARPENTER_NODE_ROLE": codebuild.BuildEnvironmentVariable(value=self.karpenter_node_role.role_name),
                     "EKS_NODE_ROLE": codebuild.BuildEnvironmentVariable(value=self.eks_node_role.role_name),
-                    "CERTIFICATE_ARN": codebuild.BuildEnvironmentVariable(value=self.config.cicd_k8s_fastapi.certificate_arn),
+                    "CERTIFICATE_ARN": codebuild.BuildEnvironmentVariable(value=self.config.cicd_k8s_main_api.certificate_arn),
                     "ARGOCD_DOMAIN_NAME": codebuild.BuildEnvironmentVariable(value=self.config.dns.argocd_domain_name),
                     "ALB_SG_ID": codebuild.BuildEnvironmentVariable(value=self.alb_sg.security_group_id),
                 },

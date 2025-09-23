@@ -20,7 +20,7 @@ Cette infrastructure utilise une approche hybride :
 │ │             │ │    │ │             │ │    │ │ - kube-proxy│ │
 │ │ IAM Roles   │ │    │ │             │ │    │ │ - ALB Ctrl  │ │
 │ │             │ │    │ │             │ │    │ │ - Karpenter │ │
-│ │ Outputs     │ │    │ │             │ │    │ │ - FastAPI   │ │
+│ │ Outputs     │ │    │ │             │ │    │ │ - MainApi   │ │
 │ └─────────────┘ │    │ └─────────────┘ │    │ │ - Ingress   │ │
 └─────────────────┘    └─────────────────┘    │ └─────────────┘ │
                                               └─────────────────┘
@@ -81,7 +81,7 @@ Cette infrastructure utilise une approche hybride :
 1. **EksClusterRole** - Rôle pour le cluster EKS
 2. **EksNodeRole** - Rôle pour les nœuds EKS standard
 3. **KarpenterNodeRole** - Rôle pour les nœuds gérés par Karpenter
-4. **FastApiCodeBuildRole** - Rôle pour CodeBuild FastAPI
+4. **MainApiCodeBuildRole** - Rôle pour CodeBuild MainApi
 5. **AlbControllerRole** - Rôle pour AWS Load Balancer Controller
 6. **ArgoCDRole** - Rôle pour ArgoCD
 
@@ -128,13 +128,13 @@ manifests/
 │   │   ├── kube-proxy.yaml
 │   │   ├── aws-load-balancer-controller.yaml
 │   │   ├── karpenter.yaml
-│   │   └── fastapi-app.yaml
+│   │   └── main-api-app.yaml
 │   └── projects/
 │       └── default.yaml
 ├── coredns/
 ├── karpenter/
 ├── aws-load-balancer-controller/
-└── fastapi/
+└── main-api/
 ```
 
 ### 2. Exemple de manifest Karpenter

@@ -1,10 +1,10 @@
 apiVersion: v1
 kind: Deployment
 metadata:
-  name: file-service-app
-  namespace: file-service
+  name: main-api
+  namespace: main-api-${ENV_NAME}
 spec:
-  replicas: ${DESIRED_REPLICAS}
+  # replicas: ${DESIRED_REPLICAS}
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -13,7 +13,7 @@ spec:
   template:
     spec:
       containers:
-      - name: file-service
+      - name: main-api
         image: ${IMAGE_URL}
         resources:
           requests:
